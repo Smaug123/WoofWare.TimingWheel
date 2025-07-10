@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+      <TargetFramework>net5.0</TargetFramework>
+      <GenerateDocumentationFile>true</GenerateDocumentationFile>
+      <Authors>Patrick Stevens</Authors>
+      <Copyright>Copyright (c) Patrick Stevens 2025</Copyright>
+      <Description>A timing wheel is a specialized priority queue for a set of time-based alarms.</Description>
+      <RepositoryType>git</RepositoryType>
+      <RepositoryUrl>https://github.com/Smaug123/WoofWare.TimingWheel</RepositoryUrl>
+      <PackageLicenseExpression>MIT</PackageLicenseExpression>
+      <PackageReadmeFile>README.md</PackageReadmeFile>
+      <PackageTags>timing_wheel;core_kernel;ocaml</PackageTags>
+      <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Compile Include="Int64.fs" />
+      <Compile Include="TimeNs.fs" />
+      <Compile Include="NumKeyBits.fs" />
+      <Compile Include="LevelBits.fs" />
+      <Compile Include="AlarmPrecision.fs" />
+      <Compile Include="Config.fs" />
+      <Compile Include="IntervalNumSpan.fs" />
+      <Compile Include="IntervalNum.fs" />
+      <Compile Include="Key.fs" />
+      <Compile Include="ExternalElt.fs" />
+      <Compile Include="InternalElt.fs" />
+      <Compile Include="Level.fs" />
+      <Compile Include="PriorityQueue.fs" />
+      <EmbeddedResource Include="SurfaceBaseline.txt" />
+      <EmbeddedResource Include="../version.json" />
+      <None Include="..\README.md">
+        <Pack>True</Pack>
+        <PackagePath>\</PackagePath>
+      </None>
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Update="FSharp.Core" Version="5.0.0" />
+    </ItemGroup>
+</Project>

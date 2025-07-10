@@ -1,0 +1,7 @@
+WoofWare.BalancedReducer.BalancedReducer inherit obj
+WoofWare.BalancedReducer.BalancedReducer.compute [static method]: 'a WoofWare.BalancedReducer.BalancedReducer -> 'a
+WoofWare.BalancedReducer.BalancedReducer.create [static method]: int -> ('a -> 'a -> 'a) -> 'a WoofWare.BalancedReducer.BalancedReducer
+WoofWare.BalancedReducer.BalancedReducer.get [static method]: 'a WoofWare.BalancedReducer.BalancedReducer -> int -> 'a
+WoofWare.BalancedReducer.BalancedReducer.invariant [static method]: 'a WoofWare.BalancedReducer.BalancedReducer -> unit
+WoofWare.BalancedReducer.BalancedReducer.set [static method]: 'a WoofWare.BalancedReducer.BalancedReducer -> int -> 'a -> unit
+WoofWare.BalancedReducer.BalancedReducer`1 inherit obj
