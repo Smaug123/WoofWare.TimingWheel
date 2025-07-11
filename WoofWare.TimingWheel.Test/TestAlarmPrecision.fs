@@ -3,104 +3,101 @@ namespace WoofWare.TimingWheel.Test
 open NUnit.Framework
 open WoofWare.Expect
 open WoofWare.TimingWheel
+open FsUnitTyped
 
 [<TestFixture>]
 module TestAlarmPrecision =
+    [<OneTimeSetUp>]
+    let oneTimeSetUp () =
+        // GlobalBuilderConfig.enterBulkUpdateMode ()
+        ()
+
+    [<OneTimeTearDown>]
+    let oneTimeTearDown () =
+        GlobalBuilderConfig.updateAllSnapshots ()
 
     [<Test>]
     let ``constant values`` () =
         expect {
-            snapshot ""
-            return AlarmPrecision.aboutOneDay
+            snapshot @"19h32m48s.744177600 (70368744177664 ns)"
+            return AlarmPrecision.aboutOneDay |> AlarmPrecision.display
         }
         expect {
-            snapshot ""
-            return AlarmPrecision.aboutOneSecond
+            snapshot @"01s.073741800 (1073741824 ns)"
+            return AlarmPrecision.aboutOneSecond |> AlarmPrecision.display
         }
         expect {
-            snapshot ""
-            return AlarmPrecision.aboutOneMicrosecond
+            snapshot @"00s.000001000 (1024 ns)"
+            return AlarmPrecision.aboutOneMicrosecond |> AlarmPrecision.display
         }
         expect {
-            snapshot ""
-            return AlarmPrecision.aboutOneMillisecond
+            snapshot @"00s.001048500 (1048576 ns)"
+            return AlarmPrecision.aboutOneMillisecond |> AlarmPrecision.display
         }
         expect {
-            snapshot ""
-            return AlarmPrecision.oneNanosecond
+            snapshot @"00s.000000000 (1 ns)"
+            return AlarmPrecision.oneNanosecond |> AlarmPrecision.display
         }
 
-    (*
-    print about_one_day;
-    [%expect {| (19h32m48.744177664s 70_368_744_177_664ns) |}];
-    print about_one_second;
-    [%expect {| (1.073741824s 1_073_741_824ns) |}];
-    print about_one_microsecond;
-    [%expect {| (1.024us 1_024ns) |}];
-    print about_one_millisecond;
-    [%expect {| (1.048576ms 1_048_576ns) |}];
-    print one_nanosecond;
-    [%expect {| (1ns 1ns) |}]
-    *)
+    [<Test>]
+    let ``test div`` () =
+        expect {
+            snapshotJson @"[
+  ""08s.589934500 (8589934592 ns)"",
+  ""04s.294967200 (4294967296 ns)"",
+  ""02s.147483600 (2147483648 ns)"",
+  ""01s.073741800 (1073741824 ns)"",
+  ""00s.536870900 (536870912 ns)"",
+  ""00s.268435400 (268435456 ns)"",
+  ""00s.134217700 (134217728 ns)""
+]"
+            return [-3 .. 3] |> List.map (AlarmPrecision.div AlarmPrecision.aboutOneSecond >> AlarmPrecision.display)
+        }
 
-  let%expect_test "[div]" =
-    for pow2 = -3 to 3 do
-      print (div about_one_second ~pow2)
-    done;
-    [%expect
-      {|
-      (8.589934592s 8_589_934_592ns)
-      (4.294967296s 4_294_967_296ns)
-      (2.147483648s 2_147_483_648ns)
-      (1.073741824s 1_073_741_824ns)
-      (536.870912ms 536_870_912ns)
-      (268.435456ms 268_435_456ns)
-      (134.217728ms 134_217_728ns)
-      |}]
-  ;;
+    [<Test>]
+    let ``test mul`` () =
+        expect {
+            snapshotJson @"[
+  ""00s.134217700 (134217728 ns)"",
+  ""00s.268435400 (268435456 ns)"",
+  ""00s.536870900 (536870912 ns)"",
+  ""01s.073741800 (1073741824 ns)"",
+  ""02s.147483600 (2147483648 ns)"",
+  ""04s.294967200 (4294967296 ns)"",
+  ""08s.589934500 (8589934592 ns)""
+]"
+            return [-3 .. 3] |> List.map (AlarmPrecision.mul AlarmPrecision.aboutOneSecond >> AlarmPrecision.display)
+        }
 
-  let%expect_test "[mul]" =
-    for pow2 = -3 to 3 do
-      print (mul about_one_second ~pow2)
-    done;
-    [%expect
-      {|
-      (134.217728ms 134_217_728ns)
-      (268.435456ms 268_435_456ns)
-      (536.870912ms 536_870_912ns)
-      (1.073741824s 1_073_741_824ns)
-      (2.147483648s 2_147_483_648ns)
-      (4.294967296s 4_294_967_296ns)
-      (8.589934592s 8_589_934_592ns)
-      |}]
-  ;;
+    [<Test>]
+    let ``test ofSpanFloorPow2Ns`` () : unit =
+        for t in [ AlarmPrecision.aboutOneDay ; AlarmPrecision.aboutOneSecond ; AlarmPrecision.aboutOneMillisecond ; AlarmPrecision.aboutOneMicrosecond ; AlarmPrecision.oneNanosecond ] do
+            t
+            |> shouldEqual (t |> AlarmPrecision.toSpan |> AlarmPrecision.ofSpanFloorPow2Ns)
 
-  let%expect_test "[of_span_floor_pow2_ns]" =
-    List.iter
-      [ about_one_day
-      ; about_one_second
-      ; about_one_millisecond
-      ; about_one_microsecond
-      ; one_nanosecond
-      ]
-      ~f:(fun t ->
-        require (equal t (t |> to_span |> of_span_floor_pow2_ns));
-        if Time_ns.Span.( > ) (t |> to_span) Time_ns.Span.nanosecond
-        then
-          require
-            (equal
-               t
-               (Time_ns.Span.( + ) (t |> to_span) Time_ns.Span.nanosecond
-                |> of_span_floor_pow2_ns)));
-    List.iter [ 1.; 1E-3; 1E-6 ] ~f:(fun span ->
-      let span = Time_ns.Span.of_sec span in
-      print_s
-        [%message
-          "" (span : Time_ns.Span.t) ~alarm_precision:(span |> of_span_floor_pow2_ns : t)]);
-    [%expect
-      {|
-      ((span 1s) (alarm_precision (536.870912ms 536_870_912ns)))
-      ((span 1ms) (alarm_precision (524.288us 524_288ns)))
-      ((span 1us) (alarm_precision (512ns 512ns)))
-      |}]
-  ;;
+            if AlarmPrecision.toSpan t > TimeNs.Span.nanosecond then
+                t
+                |> shouldEqual ((AlarmPrecision.toSpan t + TimeNs.Span.nanosecond) |> AlarmPrecision.ofSpanFloorPow2Ns)
+
+        expect {
+            snapshotJson @"[
+  [
+    ""01s.000000000"",
+    ""00s.536870900 (536870912 ns)""
+  ],
+  [
+    ""00s.001000000"",
+    ""00s.000524200 (524288 ns)""
+  ],
+  [
+    ""00s.000001000"",
+    ""00s.000000500 (512 ns)""
+  ]
+]"
+            return
+                [1.0;  1e-3 ; 1e-6]
+                |> List.map (fun s ->
+                    let span = TimeNs.Span.ofSec s
+                    Span.display span, AlarmPrecision.display (AlarmPrecision.ofSpanFloorPow2Ns span)
+                )
+        }

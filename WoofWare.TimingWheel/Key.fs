@@ -16,7 +16,7 @@ type internal MinKeyInSameSlotMask = int64
 [<RequireQualifiedAccess>]
 module internal MinKeyInSameSlotMask =
     let create (bitsPerSlot : NumKeyBits) : MinKeyInSameSlotMask =
-        ~~~(NumKeyBits.pow2 bitsPerSlot - NumKeyBits.one)
+        ~~~(NumKeyBits.pow2 bitsPerSlot - 1L)
 
 type internal Span = int64
 
@@ -35,7 +35,7 @@ type internal Key = int64
 [<RequireQualifiedAccess>]
 module internal Key =
 
-    let numKeys (numBits : NumKeyBits) : NumKeyBits = NumKeyBits.pow2 numBits
+    let numKeys (numBits : NumKeyBits) : Span = NumKeyBits.pow2 numBits
 
     let zero : Key = 0L
     let maxValue : Key = Int64.MaxValue

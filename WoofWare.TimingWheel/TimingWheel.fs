@@ -113,7 +113,9 @@ module TimingWheel =
         if maxAllowedKey >= t.MaxIntervalNum then
             maxTime
         else
-            TimeNs.add (intervalNumStartUnchecked t maxAllowedKey) (t.Config.AlarmPrecision - TimeNs.Span.nanosecond)
+            TimeNs.add
+                (intervalNumStartUnchecked t maxAllowedKey)
+                ((AlarmPrecision.toSpan t.Config.AlarmPrecision) - TimeNs.Span.nanosecond)
 
     let nowIntervalNum (t : TimingWheel<'a>) : Key =
         PriorityQueue.minAllowedKey t.PriorityQueue

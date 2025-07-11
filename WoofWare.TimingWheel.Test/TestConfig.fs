@@ -1,113 +1,134 @@
 namespace WoofWare.TimingWheel.Test
 
 open NUnit.Framework
+open WoofWare.Expect
 open WoofWare.TimingWheel
 
 [<TestFixture>]
 module TestConfig =
 
-let%expect_test "[Config.microsecond_precision]" =
-  print_s [%sexp (Config.microsecond_precision () : Config.t)];
-  [%expect {| ((alarm_precision 1.024us) (level_bits (10 10 6 6 5))) |}];
-  print_s
-    [%sexp (Config.durations (Config.microsecond_precision ()) : Time_ns.Span.t list)];
-  [%expect
-    {|
-    (1.048576ms
-     1.073741824s
-     1m8.719476736s
-     1h13m18.046511104s
-     1d15h5m37.488355328s)
-    |}]
-;;
+    [<OneTimeSetUp>]
+    let oneTimeSetUp () =
+        // GlobalBuilderConfig.enterBulkUpdateMode ()
+        ()
 
-let create_config ?extend_to_max_num_bits ?level_bits ~alarm_precision () =
-  Config.create
-    ()
-    ~alarm_precision:(alarm_precision |> Alarm_precision.of_span_floor_pow2_ns)
-    ?level_bits:(Option.map level_bits ~f:(Level_bits.create_exn ?extend_to_max_num_bits))
-;;
+    [<OneTimeTearDown>]
+    let oneTimeTearDown () =
+        GlobalBuilderConfig.updateAllSnapshots ()
 
-let%expect_test "[Config.create] with negative alarm precision" =
-  require_does_raise (fun () -> create_config ~alarm_precision:(gibi_nanos (-1.)) ());
-  [%expect
-    {|
-    ("[Alarm_precision.of_span_floor_pow2_ns] got non-positive span"
-     (span -1.073741824s))
-    |}]
-;;
+    [<Test>]
+    let ``microsecondPrecision test`` () =
+        expect {
+            snapshot @"00s.000001000 (1024 ns) : (10, 10, 6, 6, 5)"
+            return Config.microsecondPrecision () |> Config.display
+        }
 
-let%expect_test "[Config.create] with zero alarm precision" =
-  require_does_raise (fun () -> create_config ~alarm_precision:(gibi_nanos 0.) ());
-  [%expect
-    {| ("[Alarm_precision.of_span_floor_pow2_ns] got non-positive span" (span 0s)) |}]
-;;
+        expect {
+            snapshotJson @"[
+  ""00s.001048500"",
+  ""01s.073741800"",
+  ""01m08s.719476700"",
+  ""01h13m18s.046511100"",
+  ""01d15h05m37s.488355300""
+]"
+            return Config.durations (Config.microsecondPrecision ()) |> List.map Span.display
+        }
 
-let%expect_test "[Config.create] with one second alarm precision" =
-  print_s [%sexp (create_config ~alarm_precision:(gibi_nanos 1.) () : Config.t)];
-  [%expect {| ((alarm_precision 1.073741824s) (level_bits (11 10 10 1))) |}]
-;;
+    /// giga-nanoseecond
+    let gibi = pown 2.0 30
+    let gibiNanos float = float * gibi |> System.Math.Round |> int64<float> |> TimeNs.Span.ofInt64Ns
 
-let%expect_test "[Config.durations]" =
-  let durations ?extend_to_max_num_bits level_bits =
-    print_s
-      [%sexp
-        (Config.durations
-           (create_config
-              ?extend_to_max_num_bits
-              ~alarm_precision:(gibi_nanos 1.)
-              ~level_bits
-              ())
-         : Time_ns.Span.t list)]
-  in
-  durations [ 1 ];
-  [%expect {| (2.147483648s) |}];
-  durations [ 2; 1 ];
-  [%expect {| (4.294967296s 8.589934592s) |}];
-  durations (List.init 32 ~f:(const 1));
-  [%expect
-    {|
-    (2.147483648s
-     4.294967296s
-     8.589934592s
-     17.179869184s
-     34.359738368s
-     1m8.719476736s
-     2m17.438953472s
-     4m34.877906944s
-     9m9.755813888s
-     18m19.511627776s
-     36m39.023255552s
-     1h13m18.046511104s
-     2h26m36.093022208s
-     4h53m12.186044416s
-     9h46m24.372088832s
-     19h32m48.744177664s
-     1d15h5m37.488355328s
-     3d6h11m14.976710656s
-     6d12h22m29.953421312s
-     13d44m59.906842624s
-     26d1h29m59.813685248s
-     52d2h59m59.627370496s
-     104d5h59m59.254740992s
-     208d11h59m58.509481984s
-     416d23h59m57.018963968s
-     833d23h59m54.037927936s
-     1667d23h59m48.075855872s
-     3335d23h59m36.151711744s
-     6671d23h59m12.303423488s
-     13343d23h58m24.606846976s
-     26687d23h56m49.213693952s
-     53375d23h53m38.427387903s)
-    |}];
-  durations [ 10; 10; 10 ] ~extend_to_max_num_bits:true;
-  [%expect
-    {|
-    (18m19.511627776s
-     13d44m59.906842624s
-     13343d23h58m24.606846976s
-     26687d23h56m49.213693952s
-     53375d23h53m38.427387903s)
-    |}]
-;;
+    let createConfig (extendToMaxNumBits: bool option) (levelBits: int list option) (alarmPrecision: TimeNs.Span) : Config =
+        Config.create None (levelBits |> Option.map (fun l ->
+            match extendToMaxNumBits with
+            | None ->LevelBits.createThrowing l
+            | Some extendToMaxNumBits -> LevelBits.createThrowing' extendToMaxNumBits l
+        ) |> Option.defaultValue LevelBits.default') (alarmPrecision |> AlarmPrecision.ofSpanFloorPow2Ns)
 
+    [<Test>]
+    let ``create with negative alarm precision`` () =
+        expect {
+            snapshotThrows @"System.ArgumentException: expected positive span (Parameter 'span')"
+            return! (fun () -> createConfig None None (gibiNanos -1.0))
+        }
+
+    [<Test>]
+    let ``create with zero alarm precision`` () =
+        expect {
+            snapshotThrows @"System.ArgumentException: expected positive span (Parameter 'span')"
+            return! (fun () -> createConfig None None (gibiNanos 0.0))
+        }
+
+    [<Test>]
+    let ``create with one second alarm precision`` () =
+        expect {
+            // TODO: this is wrong!
+            snapshot @"01s.073741800 (1073741824 ns) : (11, 10, 10, 1)"
+            return createConfig None None (gibiNanos 1.0) |> Config.display
+        }
+
+    [<Test>]
+    let ``Config durations test`` () : unit =
+        let durations extendToMaxNumBits (levelBits : LevelBits) =
+            Config.durations (createConfig extendToMaxNumBits (Some levelBits) (gibiNanos 1.0))
+
+        expect {
+            snapshot @"[02s.147483600]"
+            return durations None [ 1 ] |> List.map Span.display
+        }
+
+        expect {
+            snapshot @"[04s.294967200; 08s.589934500]"
+            return durations None [ 2 ; 1 ] |> List.map Span.display
+        }
+
+        expect {
+            snapshotJson @"[
+  ""02s.147483600"",
+  ""04s.294967200"",
+  ""08s.589934500"",
+  ""17s.179869100"",
+  ""34s.359738300"",
+  ""01m08s.719476700"",
+  ""02m17s.438953400"",
+  ""04m34s.877906900"",
+  ""09m09s.755813800"",
+  ""18m19s.511627700"",
+  ""36m39s.023255500"",
+  ""01h13m18s.046511100"",
+  ""02h26m36s.093022200"",
+  ""04h53m12s.186044400"",
+  ""09h46m24s.372088800"",
+  ""19h32m48s.744177600"",
+  ""01d15h05m37s.488355300"",
+  ""03d06h11m14s.976710600"",
+  ""06d12h22m29s.953421300"",
+  ""13d00h44m59s.906842600"",
+  ""26d01h29m59s.813685200"",
+  ""52d02h59m59s.627370400"",
+  ""104d05h59m59s.254740899"",
+  ""208d11h59m58s.509481899"",
+  ""416d23h59m57s.018963903"",
+  ""833d23h59m54s.037927896"",
+  ""1667d23h59m48s.075855792"",
+  ""3335d23h59m36s.151711702"",
+  ""6671d23h59m12s.303423524"",
+  ""13343d23h58m24s.606847048"",
+  ""26687d23h56m49s.213694096"",
+  ""53375d23h53m38s.427388191""
+]"
+            return durations None (List.replicate 32 1) |> List.map Span.display
+        }
+
+        expect {
+            snapshotJson @"[
+  ""18m19s.511627700"",
+  ""13d00h44m59s.906842600"",
+  ""13343d23h58m24s.606847048"",
+  ""26687d23h56m49s.213694096"",
+  ""53375d23h53m38s.427388191"",
+  ""106751d23h47m16s.854776382""
+]"
+            return durations (Some true) [ 10;10;10 ] |> List.map Span.display
+        }
+        failwith "TODO: we have an extra entry there for some reason"

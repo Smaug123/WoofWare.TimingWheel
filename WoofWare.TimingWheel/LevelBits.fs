@@ -26,7 +26,7 @@ module LevelBits =
             invalidArg "ints" "expected nonempty list"
 
         if List.exists (fun b -> b <= 0) ints then
-            invalidArg "expected positive num bits" "ints"
+            invalidArg "ints" "expected positive num bits"
 
         let numBits = List.sum ints
 

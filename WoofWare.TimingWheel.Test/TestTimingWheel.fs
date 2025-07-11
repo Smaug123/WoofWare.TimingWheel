@@ -8,11 +8,6 @@ open WoofWare.TimingWheel
 
 [<TestFixture>]
 module TestBalancedReducer =
-    /// giga-nanoseecond
-    let gibi = pown 2.0 30
-    // let gibi_nanos float = float *. gibi |> Time_ns.Span.of_ns
-
-    let max_time = Private.max_time
 
 let%expect_test "[level_bits], [config], and [max_allowed_alarm_time]" =
   List.iter

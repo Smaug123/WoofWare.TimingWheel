@@ -44,6 +44,8 @@ module TimeNs =
         [<Literal>]
         let minValueFor1usRounding : Span = -maxValueFor1usRounding
 
+        let ofSec (secs : float) : Span =
+            System.Math.Round (secs * float second) |> int64
 
     [<Literal>]
     let maxValueFor1usRounding : TimeNs = Span.maxValueFor1usRounding
