@@ -21,7 +21,7 @@ type internal Pool<'a> =
 [<RequireQualifiedAccess>]
 module internal Pool =
 
-    let create (dummy : 'a option) (copyTo : int -> 'a[] -> 'a -> unit) (capacity : int) : 'a Pool =
+    let create<'a> (dummy : 'a option) (copyTo : int -> 'a[] -> 'a -> unit) (capacity : int) : 'a Pool =
         if capacity <= 0 then
             invalidArg "capacity" "capacity must be strictly positive"
 
@@ -51,7 +51,53 @@ module internal Pool =
             | _ -> false
 
     let isFull (p : Pool<'a>) : bool = p.FirstFreeHeader.IsNone
-    let grow (capacity : int) (p : Pool<'a>) : Pool<'a> = 0
+    let grow (capacity : int) (p : Pool<'a>) : Pool<'a> = failwith "TODO"
+    (*
+        let { Metadata.slots_per_tuple
+        ; capacity = old_capacity
+        ; length
+        ; next_id
+        ; first_free = _
+        ; dummy
+        }
+          =
+          metadata t
+        in
+        let capacity =
+          min (max_capacity ~slots_per_tuple) (grow_capacity ~capacity ~old_capacity)
+        in
+        if capacity = old_capacity
+        then
+          failwiths
+            "Pool.grow cannot grow pool; capacity already at maximum"
+            capacity
+            [%sexp_of: int];
+        let metadata =
+          { Metadata.slots_per_tuple
+          ; capacity
+          ; length
+          ; next_id
+          ; first_free = Header.null
+          ; dummy
+          }
+        in
+        let t' = create_array metadata in
+        Uniform_array.blit
+          ~src:t
+          ~src_pos:start_of_tuples_index
+          ~dst:t'
+          ~dst_pos:start_of_tuples_index
+          ~len:(old_capacity * Metadata.array_indices_per_tuple metadata);
+        destroy t;
+        unsafe_init_range t' metadata ~lo:old_capacity ~hi:capacity;
+        for tuple_num = old_capacity - 1 downto 0 do
+          let header_index = tuple_num_to_header_index metadata tuple_num in
+          let header = unsafe_header t' ~header_index in
+          if not (Header.is_used header)
+          then unsafe_add_to_free_list t' metadata ~header_index
+        done;
+        t'
+        *)
 
     let private malloc (p : Pool<'a>) : int =
         match p.FirstFreeHeader with

@@ -43,6 +43,7 @@ module internal Key =
     let toInt64 (t : Key) : int64 = t
     let toIntThrowing (t : Key) : int = Checked.int t
     let succ (t : Key) : Key = t + 1L
+    let pred (t : Key) : Key = t - 1L
 
     let addClampToMax (t : Key) (i : Span) : Key =
         if t > maxValue - i then maxValue else t + i

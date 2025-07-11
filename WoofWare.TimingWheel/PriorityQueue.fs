@@ -24,6 +24,7 @@ module Elt =
     let value (p : PriorityQueue<ExternalEltValue<'a>>) (t : ExternalElt) : 'a =
         InternalElt.value p.Pool (InternalElt.ofExternalThrowing p.Pool t)
 
+[<RequireQualifiedAccess>]
 module PriorityQueue =
     let isEmpty (t : PriorityQueue<'a>) : bool = t.Length = 0
     let numLevels (t : PriorityQueue<'a>) : int = Array.length t.Levels
@@ -63,7 +64,7 @@ module PriorityQueue =
         else
             Span.pred (Key.numKeys bits)
 
-    let invariant inv (t : PriorityQueue<ExternalEltValue<'a>>) : unit =
+    let invariant (inv : 'a -> unit) (t : PriorityQueue<ExternalEltValue<'a>>) : unit =
         let pool = t.Pool
 
         let levelInvariant (level : Level) : unit =
@@ -249,3 +250,320 @@ module PriorityQueue =
         t.MinElt <- minEltAlreadyFound
         t.EltKeyLowerBound <- minKeyAlreadyFound
         t.MinElt
+
+    let internal raiseAddEltKeyOutOfBounds (key : Key) (t : PriorityQueue<'a>) : unit =
+        failwith $"PriorityQueue.addElt key {key} out of bounds ({minAllowedKey t} .. {maxAllowedKey t})"
+
+    let internal raiseAddEltKeyOutOfLevelBounds (key : Key) (level : Level) =
+        failwith $"PriorityQueue.addElt key {key} out of level bounds: {level}"
+
+    let addElt (t : PriorityQueue<ExternalEltValue<'a>>) elt =
+        let pool = t.Pool
+        let key = InternalElt.key pool elt
+
+        if not (key >= minAllowedKey t && key <= maxAllowedKey t) then
+            raiseAddEltKeyOutOfBounds key t
+
+        // Find the lowest level that will hold [elt].
+        let levelIndex =
+            let mutable levelIndex = 0
+
+            while key > t.Levels.[levelIndex].MaxAllowedKey do
+                levelIndex <- levelIndex + 1
+
+            levelIndex
+
+        let level = t.Levels.[levelIndex]
+
+        if not (key >= level.MinAllowedKey && key <= level.MaxAllowedKey) then
+            raiseAddEltKeyOutOfLevelBounds key level
+
+        level.Length <- level.Length + 1
+        InternalElt.setLevelIndex pool elt levelIndex
+        let slot = Level.slot level key
+        let slots = level.Slots
+        let first = slots.[slot]
+
+        if not (InternalElt.isNull first) then
+            InternalElt.insertAtEnd pool first elt
+        else
+            slots.[slot] <- elt
+            InternalElt.linkToSelf pool elt
+
+    let internalAddElt (t : PriorityQueue<ExternalEltValue<'a>>) (elt : InternalElt) : unit =
+        let key = InternalElt.key t.Pool elt in
+
+        if key < t.EltKeyLowerBound then
+            t.MinElt <- elt
+            t.EltKeyLowerBound <- key
+
+        addElt t elt
+        t.Length <- t.Length + 1
+
+    let internal raiseGotInvalidKey (t : PriorityQueue<'a>) (key : Key) : unit =
+        failwith $"addAtIntervalNum got invalid interval num {key} ({minAllowedKey t} .. {maxAllowedKey t})"
+
+    let internal ensureValidKey (t : PriorityQueue<'a>) (key : Key) : unit =
+        if key < minAllowedKey t || key > maxAllowedKey t then
+            raiseGotInvalidKey t key
+
+    let internalAdd t key atTime value =
+        ensureValidKey t key
+
+        if Pool.isFull t.Pool then
+            t.Pool <- Pool.grow 1 t.Pool
+
+        let elt = InternalElt.create t.Pool key atTime value -1
+        internalAddElt t elt
+        elt
+
+    /// [remove_or_re_add_elts] visits each element in the circular doubly-linked list
+    ///  [first]. If the element's key is [>= t_min_allowed_key], then it adds the element
+    ///  back at a lower level. If not, then it calls [handle_removed] and [free]s the
+    ///  element.
+    let removeOrReAddElts
+        (t : PriorityQueue<ExternalEltValue<'a>>)
+        (level : Level)
+        (first : InternalElt)
+        (tMinAllowedKey : Key)
+        (handleRemoved : ExternalElt -> unit)
+        : unit
+        =
+        let pool = t.Pool
+        let mutable current = first
+        let mutable cont = true
+
+        while cont do
+            // We extract [next] from [current] first, because we will modify or [free]
+            // [current] before continuing the loop.
+            let next = InternalElt.next pool current
+            level.Length <- level.Length - 1
+
+            if (InternalElt.key pool current) >= tMinAllowedKey then
+                addElt t current
+            else
+                t.Length <- t.Length - 1
+                handleRemoved (InternalElt.toExternal current)
+                InternalElt.free pool current
+
+            if next = first then cont <- false else current <- next
+
+    /// [increase_level_min_allowed_key] increases the [min_allowed_key] of [level] to as
+    ///   large a value as possible, but no more than [max_level_min_allowed_key].
+    ///   [t_min_allowed_key] is the minimum allowed key for the entire timing wheel. As
+    ///   elements are encountered, they are removed from the timing wheel if their key is
+    ///   smaller than [t_min_allowed_key], or added at a lower level if not.
+    let increaseLevelMinAllowedKey
+        (t : PriorityQueue<ExternalEltValue<'a>>)
+        (level : Level)
+        (prevLevelMaxAllowedKey : Key)
+        (tMinAllowedKey : Key)
+        (handleRemoved : ExternalElt -> unit)
+        : unit
+        =
+        let desiredMinAllowedKey = Level.computeMinAllowedKey level prevLevelMaxAllowedKey
+        // We require that [mod level.min_allowed_key level.keys_per_slot = 0].  So,
+        //   we start [level_min_allowed_key] where that is true, and then increase it by
+        //   [keys_per_slot] each iteration of the loop.
+        let levelMinAllowedKey =
+            Level.minKeyInSameSlot level (min desiredMinAllowedKey (max level.MinAllowedKey t.EltKeyLowerBound))
+
+        let mutable levelMinAllowedKey = levelMinAllowedKey
+        let mutable slot = Level.slot level levelMinAllowedKey
+        let keysPerSlot = level.KeysPerSlot
+        let slots = level.Slots
+
+        while levelMinAllowedKey < desiredMinAllowedKey do
+            if level.Length = 0 then
+                // If no elements remain at this level, we can just set [min_allowed_key] to the desired value.
+                levelMinAllowedKey <- desiredMinAllowedKey
+            else
+                let first = slots.[slot] in
+
+                if not (InternalElt.isNull first) then
+                    slots.[slot] <- InternalElt.null'
+                    removeOrReAddElts t level first tMinAllowedKey handleRemoved
+
+                slot <- Level.nextSlot level slot
+                levelMinAllowedKey <- Key.addClampToMax levelMinAllowedKey keysPerSlot
+
+        level.MinAllowedKey <- desiredMinAllowedKey
+        level.MaxAllowedKey <- Key.addClampToMax desiredMinAllowedKey level.DiffMaxMinAllowedKey
+
+    type IncreaseMinAllowedKeyResult =
+        | MaxAllowedKeyDidNotChange
+        | MaxAllowedKeyMaybeChanged
+
+    let increaseMinAllowedKey t key handleRemoved : IncreaseMinAllowedKeyResult =
+        if key <= (minAllowedKey t) then
+            IncreaseMinAllowedKeyResult.MaxAllowedKeyDidNotChange
+        else
+            // We increase the [min_allowed_key] of levels in order to restore the invariant
+            // that they have as large as possible a [min_allowed_key], while leaving no gaps
+            // in keys.
+            let mutable levelIndex = 0
+            let mutable result = IncreaseMinAllowedKeyResult.MaxAllowedKeyMaybeChanged
+            let mutable prevLevelMaxAllowedKey = Key.pred key
+            let levels = t.Levels
+            let numLevels = numLevels t
+
+            while levelIndex < numLevels do
+                let level = levels.[levelIndex]
+                let minAllowedKeyBefore = level.MinAllowedKey
+                increaseLevelMinAllowedKey t level prevLevelMaxAllowedKey key handleRemoved
+
+                if level.MinAllowedKey = minAllowedKeyBefore then
+                    // This level did not shift.  Don't shift any higher levels.
+                    levelIndex <- numLevels
+                    result <- IncreaseMinAllowedKeyResult.MaxAllowedKeyDidNotChange
+                else
+                    // Level [level_index] shifted.  Consider shifting higher levels.
+                    levelIndex <- levelIndex + 1
+                    prevLevelMaxAllowedKey <- level.MaxAllowedKey
+
+            if key > t.EltKeyLowerBound then
+                // We have removed [t.min_elt] or it was already null, so just set it to null.
+                t.MinElt <- InternalElt.null'
+                t.EltKeyLowerBound <- minAllowedKey t
+
+            result
+
+    let create capacity (levelBits : LevelBits option) =
+        let levelBits =
+            match levelBits with
+            | None -> LevelBits.default'
+            | Some l -> l
+
+        let _, _, _, levels =
+            ((0, NumKeyBits.zero, Key.zero, []), levelBits)
+            ||> List.fold (fun (index, bitsPerSlot, maxLevelMinAllowedKey, levels) (levelBits : NumKeyBits) ->
+                let keysPerSlot = Key.numKeys bitsPerSlot
+                let diffMaxMinAllowedKey = computeDiffMaxMinAllowedKey levelBits bitsPerSlot
+                let minKeyInSameSlotMask = MinKeyInSameSlotMask.create bitsPerSlot
+                let minAllowedKey = Key.minKeyInSameSlot maxLevelMinAllowedKey minKeyInSameSlotMask
+                let maxAllowedKey = Key.addClampToMax minAllowedKey diffMaxMinAllowedKey
+
+                let slots =
+                    Array.replicate (Checked.int<int64> (NumKeyBits.pow2 levelBits)) InternalElt.null'
+
+                let level : Level =
+                    {
+                        Index = index
+                        Bits = levelBits
+                        SlotsMask = SlotsMask.create levelBits
+                        BitsPerSlot = bitsPerSlot
+                        KeysPerSlot = keysPerSlot
+                        MinKeyInSameSlotMask = minKeyInSameSlotMask
+                        DiffMaxMinAllowedKey = diffMaxMinAllowedKey
+                        Length = 0
+                        MinAllowedKey = minAllowedKey
+                        MaxAllowedKey = maxAllowedKey
+                        Slots = slots
+                    }
+
+                (index + 1, levelBits + bitsPerSlot, Key.succClampToMax maxAllowedKey, level :: levels)
+            )
+
+        let pool =
+            Pool.create<ExternalEltValue<'a>> None (fun i arr v -> arr.[i] <- v) capacity
+
+        let levels = Array.ofList (List.rev levels)
+
+        {
+            Length = 0
+            Pool = pool
+            MinElt = InternalElt.null'
+            EltKeyLowerBound = Key.zero
+            Levels = levels
+        }
+
+    let mem (t : PriorityQueue<'a>) (elt : ExternalElt) : bool = InternalElt.externalIsValid t.Pool elt
+
+    let internalRemove (t : PriorityQueue<ExternalEltValue<'a>>) (elt : InternalElt) : unit =
+        let pool = t.Pool
+
+        if elt = t.MinElt then
+            t.MinElt <- InternalElt.null'
+        // We keep [t.elt_lower_bound] since it is valid even though [t.min_elt] is being removed.
+        t.Length <- t.Length - 1
+        let level = t.Levels.[InternalElt.levelIndex pool elt]
+        level.Length <- level.Length - 1
+        let slots = level.Slots
+        let slot = Level.slot level (InternalElt.key pool elt)
+        let first = slots.[slot]
+
+        if elt = InternalElt.next pool elt then
+            // [elt] is the only element in the slot
+            slots.[slot] <- InternalElt.null'
+        else
+            if elt = first then
+                slots.[slot] <- InternalElt.next pool elt
+
+            InternalElt.unlink pool elt
+
+    let remove (t : PriorityQueue<ExternalEltValue<'a>>) (elt : ExternalElt) : unit =
+        let pool = t.Pool
+        let elt = InternalElt.ofExternalThrowing pool elt
+        internalRemove t elt
+        InternalElt.free pool elt
+
+    let firePastAlarms
+        (t : PriorityQueue<ExternalEltValue<'a>>)
+        (handleFired : ExternalElt -> unit)
+        (key : Key)
+        (now : TimeNs)
+        : unit
+        =
+        let level = t.Levels.[0]
+
+        if level.Length > 0 then
+            let slot = Level.slot level key
+            let slots = level.Slots
+            let pool = t.Pool
+            let mutable first = slots.[slot]
+
+            if not (InternalElt.isNull first) then
+                let mutable current = first
+                let mutable cont = true
+
+                while cont do
+                    let elt = current
+                    let next = InternalElt.next pool elt
+                    if next = first then cont <- false else current <- next
+
+                    if (InternalElt.atTime pool elt) <= now then
+                        handleFired (InternalElt.toExternal elt)
+                        internalRemove t elt
+                        InternalElt.free pool elt
+                        // We recompute [first] because [internal_remove] may have changed it.
+                        first <- slots.[slot]
+
+    let change (t : PriorityQueue<ExternalEltValue<'a>>) (elt : ExternalElt) (key : Key) (atTime : TimeNs) : unit =
+        ensureValidKey t key
+        let pool = t.Pool
+        let elt = InternalElt.ofExternalThrowing pool elt
+        internalRemove t elt
+        InternalElt.setKey pool elt key
+        InternalElt.setAtTime pool elt atTime
+        internalAddElt t elt
+
+    let clear (t : PriorityQueue<ExternalEltValue<'a>>) : unit =
+        if not (isEmpty t) then
+            t.Length <- 0
+            let pool = t.Pool
+            let freeElt elt = InternalElt.free pool elt
+            let levels = t.Levels
+
+            for levelIndex = 0 to Array.length levels - 1 do
+                let level = levels.[levelIndex]
+
+                if level.Length > 0 then
+                    level.Length <- 0
+                    let slots = level.Slots
+
+                    for slotIndex = 0 to Array.length slots - 1 do
+                        let elt = slots.[slotIndex] in
+
+                        if not (InternalElt.isNull elt) then
+                            InternalElt.iter pool elt freeElt
+                            slots.[slotIndex] <- InternalElt.null'

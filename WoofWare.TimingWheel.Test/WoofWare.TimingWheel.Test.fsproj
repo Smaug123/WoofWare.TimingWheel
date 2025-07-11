@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+      <TargetFramework>net9.0</TargetFramework>
+      <IsPackable>false</IsPackable>
+      <IsTestProject>true</IsTestProject>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="TestSurface.fs" />
+        <Compile Include="TestNumKeyBits.fs" />
+        <Compile Include="TestAlarmPrecision.fs" />
+        <Compile Include="TestConfig.fs" />
+        <Compile Include="TestLevelBits.fs" />
+        <Compile Include="TestTimingWheel.fs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="ApiSurface" Version="4.1.21" />
+        <PackageReference Include="FsUnit" Version="7.1.1" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1"/>
+        <PackageReference Include="NUnit" Version="4.3.2"/>
+        <PackageReference Include="NUnit3TestAdapter" Version="5.0.0"/>
+        <PackageReference Include="WoofWare.Expect" Version="0.5.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\WoofWare.TimingWheel\WoofWare.TimingWheel.fsproj" />
+    </ItemGroup>
+
+</Project>

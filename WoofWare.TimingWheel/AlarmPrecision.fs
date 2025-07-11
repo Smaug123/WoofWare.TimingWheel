@@ -11,7 +11,7 @@ module AlarmPrecision =
         if t < 0 then
             invalidArg "t" "negative power of 2 nanoseconds"
 
-        (t <<< 1) |> TimeNs.Span.ofInt64Ns
+        (t <<< 1) |> int64<int> |> TimeNs.Span.ofInt64Ns
 
     let oneNanosecond : AlarmPrecision = 0
     let aboutOneMicrosecond : AlarmPrecision = 10
