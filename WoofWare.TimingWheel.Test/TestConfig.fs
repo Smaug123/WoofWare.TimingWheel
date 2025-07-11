@@ -24,26 +24,40 @@ module TestConfig =
         }
 
         expect {
-            snapshotJson @"[
+            snapshotJson
+                @"[
   ""00s.001048500"",
   ""01s.073741800"",
   ""01m08s.719476700"",
   ""01h13m18s.046511100"",
   ""01d15h05m37s.488355300""
 ]"
+
             return Config.durations (Config.microsecondPrecision ()) |> List.map Span.display
         }
 
     /// giga-nanoseecond
     let gibi = pown 2.0 30
-    let gibiNanos float = float * gibi |> System.Math.Round |> int64<float> |> TimeNs.Span.ofInt64Ns
 
-    let createConfig (extendToMaxNumBits: bool option) (levelBits: int list option) (alarmPrecision: TimeNs.Span) : Config =
-        Config.create None (levelBits |> Option.map (fun l ->
-            match extendToMaxNumBits with
-            | None ->LevelBits.createThrowing l
-            | Some extendToMaxNumBits -> LevelBits.createThrowing' extendToMaxNumBits l
-        ) |> Option.defaultValue LevelBits.default') (alarmPrecision |> AlarmPrecision.ofSpanFloorPow2Ns)
+    let gibiNanos float =
+        float * gibi |> System.Math.Round |> int64<float> |> TimeNs.Span.ofInt64Ns
+
+    let createConfig
+        (extendToMaxNumBits : bool option)
+        (levelBits : int list option)
+        (alarmPrecision : TimeNs.Span)
+        : Config
+        =
+        Config.create
+            None
+            (levelBits
+             |> Option.map (fun l ->
+                 match extendToMaxNumBits with
+                 | None -> LevelBits.createThrowing l
+                 | Some extendToMaxNumBits -> LevelBits.createThrowing' extendToMaxNumBits l
+             )
+             |> Option.defaultValue LevelBits.default')
+            (alarmPrecision |> AlarmPrecision.ofSpanFloorPow2Ns)
 
     [<Test>]
     let ``create with negative alarm precision`` () =
@@ -83,7 +97,8 @@ module TestConfig =
         }
 
         expect {
-            snapshotJson @"[
+            snapshotJson
+                @"[
   ""02s.147483600"",
   ""04s.294967200"",
   ""08s.589934500"",
@@ -117,11 +132,13 @@ module TestConfig =
   ""26687d23h56m49s.213694096"",
   ""53375d23h53m38s.427388191""
 ]"
+
             return durations None (List.replicate 32 1) |> List.map Span.display
         }
 
         expect {
-            snapshotJson @"[
+            snapshotJson
+                @"[
   ""18m19s.511627700"",
   ""13d00h44m59s.906842600"",
   ""13343d23h58m24s.606847048"",
@@ -129,6 +146,8 @@ module TestConfig =
   ""53375d23h53m38s.427388191"",
   ""106751d23h47m16s.854776382""
 ]"
-            return durations (Some true) [ 10;10;10 ] |> List.map Span.display
+
+            return durations (Some true) [ 10 ; 10 ; 10 ] |> List.map Span.display
         }
+
         failwith "TODO: we have an extra entry there for some reason"

@@ -6,7 +6,4 @@ open WoofWare.TimingWheel
 module LevelBits =
 
     let display (lb : LevelBits) : string =
-        lb
-        |> List.map string<int>
-        |> String.concat ", "
-        |> sprintf "(%s)"
+        lb |> List.map string<int> |> String.concat ", " |> sprintf "(%s)"

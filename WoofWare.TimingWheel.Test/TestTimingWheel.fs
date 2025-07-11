@@ -1,38 +1,36 @@
-﻿namespace WoofWare.TimingWheel.Test
+namespace WoofWare.TimingWheel.Test
 
-open System.Text.Json
 open FsUnitTyped
 open NUnit.Framework
 open WoofWare.Expect
 open WoofWare.TimingWheel
+open WoofWare.TimingWheel.Test.TestConfig
 
 [<TestFixture>]
-module TestBalancedReducer =
+module TestTimingWheel =
 
-let%expect_test "[level_bits], [config], and [max_allowed_alarm_time]" =
-  List.iter
-    [ Level_bits.default; Level_bits.create_exn [ 1 ]; Level_bits.create_exn [ 10 ] ]
-    ~f:(fun level_bits ->
-      List.iter
-        Alarm_precision.
-          [ one_nanosecond
-          ; about_one_microsecond
-          ; about_one_millisecond
-          ; about_one_second
-          ; about_one_day
-          ]
-        ~f:(fun alarm_precision ->
-          let config = Config.create ~alarm_precision ~level_bits () in
-          print_s
-            [%message
-              ""
-                (level_bits : Level_bits.t)
-                (config : Config.t)
-                ~max_allowed_alarm_time:
-                  (max_allowed_alarm_time (create ~config ~start:Time_ns.epoch)
-                   : Time_ns.t)]));
-  [%expect
-    {|
+    [<OneTimeSetUp>]
+    let oneTimeSetUp () =
+        // GlobalBuilderConfig.enterBulkUpdateMode ()
+        ()
+
+    [<OneTimeTearDown>]
+    let oneTimeTearDown () =
+        GlobalBuilderConfig.updateAllSnapshots ()
+
+    let precisions =
+        [
+            AlarmPrecision.oneNanosecond
+            AlarmPrecision.aboutOneMicrosecond
+            AlarmPrecision.aboutOneMillisecond
+            AlarmPrecision.aboutOneSecond
+            AlarmPrecision.aboutOneDay
+        ]
+
+    [<Test>]
+    let ``LevelBits, Config, and MaxAllowedAlarmTime`` () =
+        // These times are different from those in the OCaml because we have int64 and not int63.
+        (*
     ((level_bits (11 10 10 10 10 10 1))
      (config ((alarm_precision 1ns) (level_bits (11 10 10 10 10 10 1))))
      (max_allowed_alarm_time "2116-02-20 23:53:38.427387903Z"))
@@ -48,6 +46,27 @@ let%expect_test "[level_bits], [config], and [max_allowed_alarm_time]" =
     ((level_bits (11 10 10 10 10 10 1))
      (config ((alarm_precision 19h32m48.744177664s) (level_bits (11 5))))
      (max_allowed_alarm_time "2116-02-20 23:53:38.427387903Z"))
+        *)
+        expect {
+            snapshotJson
+                @"[
+  ""2189-03-16T23:50:27.6410816Z"",
+  ""2262-04-11T23:47:16.8547760Z"",
+  ""2262-04-11T23:47:16.8547760Z"",
+  ""2262-04-11T23:47:16.8547760Z"",
+  ""2262-04-11T23:47:16.8547760Z""
+]"
+
+            return
+                precisions
+                |> List.map (fun alarmPrecision ->
+                    let config = Config.create None LevelBits.default' alarmPrecision
+                    let wheel = TimingWheel.create<int> config TimeNs.epoch
+                    TimeNs.format wheel.MaxAllowedAlarmTime
+                )
+        }
+
+        (*
     ((level_bits (1))
      (config ((alarm_precision 1ns) (level_bits (1))))
      (max_allowed_alarm_time "1970-01-01 00:00:00.000000001Z"))
@@ -63,6 +82,27 @@ let%expect_test "[level_bits], [config], and [max_allowed_alarm_time]" =
     ((level_bits (1))
      (config ((alarm_precision 19h32m48.744177664s) (level_bits (1))))
      (max_allowed_alarm_time "1970-01-02 15:05:37.488355327Z"))
+        *)
+        expect {
+            snapshotJson
+                @"[
+  ""1970-01-01T00:00:00.0000000Z"",
+  ""2262-04-11T23:47:16.8547760Z"",
+  ""2262-04-11T23:47:16.8547760Z"",
+  ""2262-04-11T23:47:16.8547760Z"",
+  ""2262-04-11T23:47:16.8547760Z""
+]"
+
+            return
+                precisions
+                |> List.map (fun alarmPrecision ->
+                    let config = Config.create None (LevelBits.createThrowing [ 1 ]) alarmPrecision
+                    let wheel = TimingWheel.create<int> config TimeNs.epoch
+                    TimeNs.format wheel.MaxAllowedAlarmTime
+                )
+        }
+
+        (*
     ((level_bits (10))
      (config ((alarm_precision 1ns) (level_bits (10))))
      (max_allowed_alarm_time "1970-01-01 00:00:00.000001023Z"))
@@ -78,111 +118,147 @@ let%expect_test "[level_bits], [config], and [max_allowed_alarm_time]" =
     ((level_bits (10))
      (config ((alarm_precision 19h32m48.744177664s) (level_bits (10))))
      (max_allowed_alarm_time "1972-04-13 23:59:54.037927935Z"))
-    |}]
-;;
+        *)
+        expect {
+            snapshotJson
+                @"[
+  ""1970-01-01T00:00:00.0000010Z"",
+  ""2262-04-11T23:47:16.8547760Z"",
+  ""2262-04-11T23:47:16.8547760Z"",
+  ""2262-04-11T23:47:16.8547760Z"",
+  ""2262-04-11T23:47:16.8547760Z""
+]"
 
-let%expect_test "[level_bits] and [max_allowed_alarm_time] with \
-                 [~extend_to_max_num_bits:true]"
-  =
-  List.iter [ 1E-9; 1E-6; 1E-3; 1.; 10. ] ~f:(fun s ->
-    let alarm_precision = gibi_nanos s in
-    let config =
-      create_config ~alarm_precision ~extend_to_max_num_bits:true ~level_bits:[ 1 ] ()
-    in
-    let max_allowed_alarm_time =
-      max_allowed_alarm_time (create ~config ~start:Time_ns.epoch)
-    in
-    print_s
-      [%message
-        ""
-          ~alarm_precision:(Config.alarm_precision config : Time_ns.Span.t)
-          ~num_level_bits:(Level_bits.num_bits (Config.level_bits config) : int)
-          (max_allowed_alarm_time : Time_ns.t)]);
-  [%expect
-    {|
-    ((alarm_precision 1ns)
-     (num_level_bits  62)
-     (max_allowed_alarm_time "2116-02-20 23:53:38.427387903Z"))
-    ((alarm_precision 1.024us)
-     (num_level_bits  52)
-     (max_allowed_alarm_time "2116-02-20 23:53:38.427387903Z"))
-    ((alarm_precision 1.048576ms)
-     (num_level_bits  42)
-     (max_allowed_alarm_time "2116-02-20 23:53:38.427387903Z"))
-    ((alarm_precision 1.073741824s)
-     (num_level_bits  32)
-     (max_allowed_alarm_time "2116-02-20 23:53:38.427387903Z"))
-    ((alarm_precision 8.589934592s)
-     (num_level_bits  29)
-     (max_allowed_alarm_time "2116-02-20 23:53:38.427387903Z"))
-    |}]
-;;
+            return
+                precisions
+                |> List.map (fun alarmPrecision ->
+                    let config = Config.create None (LevelBits.createThrowing [ 10 ]) alarmPrecision
+                    let wheel = TimingWheel.create<int> config TimeNs.epoch
+                    TimeNs.format wheel.MaxAllowedAlarmTime
+                )
+        }
 
-let create_unit
-  ?extend_to_max_num_bits
-  ?level_bits
-  ?(start = Time_ns.epoch)
-  ?(alarm_precision = gibi_nanos 1.)
-  ()
-  =
-  create
-    ~config:(create_config ?extend_to_max_num_bits ?level_bits () ~alarm_precision)
-    ~start
-;;
+    [<Test>]
+    let ``LevelBits and MaxAllowedAlarmTime with ExtendToMaxNumBits true`` () =
+        let messages = ResizeArray ()
 
-let%expect_test "[min_allowed_alarm_interval_num], [max_allowed_alarm_interval_num]" =
-  let test level_bits =
-    let t = create_unit () ~level_bits in
-    require_equal
-      (module Interval_num)
-      (min_allowed_alarm_interval_num t)
-      Interval_num.zero;
-    print_s
-      [%message
-        ""
-          ~min_allowed_alarm_interval_num:
-            (min_allowed_alarm_interval_num t : Interval_num.t)
-          ~max_allowed_alarm_interval_num:
-            (max_allowed_alarm_interval_num t : Interval_num.t)]
-  in
-  test [ 1 ];
-  [%expect
-    {|
-    ((min_allowed_alarm_interval_num 0)
-     (max_allowed_alarm_interval_num 1))
-    |}];
-  test [ 1; 1 ];
-  [%expect
-    {|
-    ((min_allowed_alarm_interval_num 0)
-     (max_allowed_alarm_interval_num 5))
-    |}];
-  test [ 1; 1; 1 ];
-  [%expect
-    {|
-    ((min_allowed_alarm_interval_num 0)
-     (max_allowed_alarm_interval_num 11))
-    |}];
-  test [ 2 ];
-  [%expect
-    {|
-    ((min_allowed_alarm_interval_num 0)
-     (max_allowed_alarm_interval_num 3))
-    |}];
-  test [ 3 ];
-  [%expect
-    {|
-    ((min_allowed_alarm_interval_num 0)
-     (max_allowed_alarm_interval_num 7))
-    |}];
-  test [ 3; 1 ];
-  [%expect
-    {|
-    ((min_allowed_alarm_interval_num 0)
-     (max_allowed_alarm_interval_num 23))
-    |}]
-;;
+        for s in [ 1E-9 ; 1E-6 ; 1E-3 ; 1.0 ; 10.0 ] do
+            let alarmPrecision = gibiNanos s
+            let config = createConfig (Some true) (Some [ 1 ]) alarmPrecision
+            let wheel = TimingWheel.create<int> config TimeNs.epoch
+            let maxAllowedAlarmTime = wheel.MaxAllowedAlarmTime
 
+            messages.Add
+                $"{AlarmPrecision.display config.AlarmPrecision}, {LevelBits.numBits config.LevelBits}, {TimeNs.format maxAllowedAlarmTime}"
+
+        expect {
+            snapshotJson
+                @"[
+  ""00s.000000000 (1 ns), 63, 2262-04-11T23:47:16.8547760Z"",
+  ""00s.000001000 (1024 ns), 53, 2262-04-11T23:47:16.8547760Z"",
+  ""00s.001048500 (1048576 ns), 43, 2262-04-11T23:47:16.8547760Z"",
+  ""01s.073741800 (1073741824 ns), 33, 2262-04-11T23:47:16.8547760Z"",
+  ""08s.589934500 (8589934592 ns), 30, 2262-04-11T23:47:16.8547760Z""
+]"
+
+            return messages
+        }
+
+    let createUnit
+        (extendToMaxNumBits : bool option)
+        (levelBits : int list option)
+        (start : TimeNs option)
+        (alarmPrecision : TimeNs option)
+        =
+        let start = start |> Option.defaultValue TimeNs.epoch
+        let alarmPrecision = alarmPrecision |> Option.defaultValue (gibiNanos 1.0)
+
+        let config = createConfig extendToMaxNumBits levelBits alarmPrecision
+        TimingWheel.create<unit> config start
+
+    [<Test>]
+    let ``min and maxAllowedAlarmIntervalNum`` () =
+        let mutable message = ""
+
+        let test levelBits =
+            message <- ""
+            let t = createUnit None (Some levelBits) None None
+            TimingWheel.minAllowedAlarmIntervalNum t |> shouldEqual IntervalNum.zero
+
+            message <-
+                $"{levelBits}: {TimingWheel.minAllowedAlarmIntervalNum t}, {TimingWheel.maxAllowedAlarmIntervalNum t}"
+
+        test [ 1 ]
+
+        expect {
+            snapshot @"[1]: 0, 1"
+            return message
+        }
+
+        test [ 1 ; 1 ]
+
+        expect {
+            snapshot @"[1; 1]: 0, 5"
+            return message
+        }
+
+        test [ 1 ; 1 ; 1 ]
+
+        expect {
+            snapshot @"[1; 1; 1]: 0, 11"
+            return message
+        }
+
+        test [ 2 ]
+
+        expect {
+            snapshot @"[2]: 0, 3"
+            return message
+        }
+
+        test [ 3 ]
+
+        expect {
+            snapshot @"[3]: 0, 7"
+            return message
+        }
+
+        test [ 3 ; 1 ]
+
+        expect {
+            snapshot @"[3; 1]: 0, 23"
+            return message
+        }
+
+    [<Test>]
+    let ``isEmpty, intervalNum, length, mem`` () =
+        let t = createUnit None (Some [ 1 ]) None None
+        TimingWheel.isEmpty t |> shouldEqual true
+        TimingWheel.length t |> shouldEqual 0
+
+        let a1 = TimingWheel.addAtIntervalNum t IntervalNum.zero ()
+        let a2 = TimingWheel.addAtIntervalNum t IntervalNum.zero ()
+
+        let show () =
+            let intervalNum1 =
+                try
+                    TimingWheel.Alarm.intervalNum t a1 |> Ok
+                with e ->
+                    Error e.Message
+
+            let intervalNum2 =
+                try
+                    TimingWheel.Alarm.intervalNum t a2 |> Ok
+                with e ->
+                    Error e.Message
+
+            $"length: {TimingWheel.length t}\nisEmpty: {TimingWheel.isEmpty t}\nintervalNum1: {intervalNum1}\nintervalNum2: {intervalNum2}\nmem1: {TimingWheel.mem t a1}\nmem2: {TimingWheel.mem t a2}"
+
+        expect' {
+            snapshot ""
+            return show ()
+        }
+(*
 let%expect_test "[is_empty], [interval_num], [length], [mem]" =
   let t = create_unit () ~level_bits:[ 1 ] in
   require (is_empty t);
@@ -1650,3 +1726,5 @@ let%expect_test "max_alarm_time can not be exceeded by [add] or [add_at_interval
      (max_allowed_alarm_interval_num 1_023))
     |}]
 ;;
+
+*)

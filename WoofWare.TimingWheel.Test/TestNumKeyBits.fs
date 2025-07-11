@@ -7,5 +7,4 @@ open WoofWare.TimingWheel
 module TestNumKeyBits =
 
     [<Test>]
-    let ``zero invariant`` () =
-        NumKeyBits.invariant NumKeyBits.zero
+    let ``zero invariant`` () = NumKeyBits.invariant NumKeyBits.zero

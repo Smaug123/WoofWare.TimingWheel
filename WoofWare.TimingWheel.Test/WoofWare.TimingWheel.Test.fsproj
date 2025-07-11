@@ -9,14 +9,16 @@
     <ItemGroup>
         <Compile Include="TestSurface.fs" />
         <Compile Include="Span.fs" />
+        <Compile Include="TimeNs.fs" />
         <Compile Include="AlarmPrecision.fs" />
         <Compile Include="LevelBits.fs" />
         <Compile Include="Config.fs" />
+        <Compile Include="TimingWheel.fs" />
         <Compile Include="TestNumKeyBits.fs" />
         <Compile Include="TestAlarmPrecision.fs" />
         <Compile Include="TestConfig.fs" />
         <Compile Include="TestLevelBits.fs" />
-        <None Include="TestTimingWheel.fs" />
+        <Compile Include="TestTimingWheel.fs" />
     </ItemGroup>
 
     <ItemGroup>

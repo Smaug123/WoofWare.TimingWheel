@@ -30,27 +30,27 @@ module TestLevelBits =
 
         expect {
             snapshotThrows @"System.ArgumentException: expected positive num bits (Parameter 'ints')"
-            return! (fun () -> LevelBits.createThrowing [0])
+            return! (fun () -> LevelBits.createThrowing [ 0 ])
         }
 
         expect {
             snapshotThrows @"System.ArgumentException: expected positive num bits (Parameter 'ints')"
-            return! (fun () -> LevelBits.createThrowing [-1])
+            return! (fun () -> LevelBits.createThrowing [ -1 ])
         }
 
         expect {
             snapshotThrows @"System.ArgumentException: expected positive num bits (Parameter 'ints')"
-            return! (fun () -> LevelBits.createThrowing [2;0;1])
+            return! (fun () -> LevelBits.createThrowing [ 2 ; 0 ; 1 ])
         }
 
         expect {
             snapshotThrows @"System.ArgumentException: too many bits: 64, more than 64 (Parameter 'ints')"
-            return! (fun () -> LevelBits.createThrowing [LevelBits.maxNumBits + 1])
+            return! (fun () -> LevelBits.createThrowing [ LevelBits.maxNumBits + 1 ])
         }
 
         expect {
             snapshotThrows @"System.ArgumentException: expected positive num bits (Parameter 'ints')"
-            return! (fun () -> LevelBits.createThrowing [0..LevelBits.maxNumBits])
+            return! (fun () -> LevelBits.createThrowing [ 0 .. LevelBits.maxNumBits ])
         }
 
     [<Test>]
@@ -59,10 +59,9 @@ module TestLevelBits =
             let levelBits = LevelBits.createThrowing bits
             LevelBits.numBits levelBits
 
-        numBits [1] |> shouldEqual 1
-        numBits [1 ; 1] |> shouldEqual 2
-        numBits [1 ; 2; 3] |> shouldEqual 6
+        numBits [ 1 ] |> shouldEqual 1
+        numBits [ 1 ; 1 ] |> shouldEqual 2
+        numBits [ 1 ; 2 ; 3 ] |> shouldEqual 6
 
     [<Test>]
-    let ``Test invariant`` () =
-        LevelBits.invariant LevelBits.default'
+    let ``Test invariant`` () = LevelBits.invariant LevelBits.default'
