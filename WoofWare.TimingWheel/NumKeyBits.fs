@@ -22,5 +22,6 @@ module NumKeyBits =
     let invariant (t : NumKeyBits) : unit =
         if t < minValue then
             failwith $"expected NumKeyBits {t} at least min value {minValue}"
+
         if t > maxValue then
             failwith $"expected NumKeyBits {t} at most max value {maxValue}"

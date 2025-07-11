@@ -6,11 +6,9 @@ type internal SlotsMask = int64
 
 [<RequireQualifiedAccess>]
 module internal SlotsMask =
-    let create (levelBits : NumKeyBits) : SlotsMask =
-        NumKeyBits.pow2 levelBits - 1L
+    let create (levelBits : NumKeyBits) : SlotsMask = NumKeyBits.pow2 levelBits - 1L
 
-    let nextSlot (t : SlotsMask) (slot : int) : int =
-        (slot + 1) &&& (Checked.int<int64> t)
+    let nextSlot (t : SlotsMask) (slot : int) : int = (slot + 1) &&& (Checked.int<int64> t)
 
 /// [Min_key_in_same_slot_mask] is used to quickly determine the minimum key in the same slot as a given key.
 type internal MinKeyInSameSlotMask = int64
@@ -37,7 +35,7 @@ type internal Key = int64
 [<RequireQualifiedAccess>]
 module internal Key =
 
-    let numKeys (numBits: NumKeyBits) : NumKeyBits = NumKeyBits.pow2 numBits
+    let numKeys (numBits : NumKeyBits) : NumKeyBits = NumKeyBits.pow2 numBits
 
     let zero : Key = 0L
     let maxValue : Key = Int64.MaxValue
@@ -45,11 +43,14 @@ module internal Key =
     let toInt64 (t : Key) : int64 = t
     let toIntThrowing (t : Key) : int = Checked.int t
     let succ (t : Key) : Key = t + 1L
-    let addClampToMax (t : Key) (i : Span) : Key = if t > maxValue - i then maxValue else t + i
-    let succClampToMax (t : Key) : Key = if t = maxValue then maxValue else succ t
+
+    let addClampToMax (t : Key) (i : Span) : Key =
+        if t > maxValue - i then maxValue else t + i
+
+    let succClampToMax (t : Key) : Key =
+        if t = maxValue then maxValue else succ t
 
     let slot t (bitsPerSlot : NumKeyBits) (slotsMask : SlotsMask) : int =
         toIntThrowing ((t <<< Checked.int bitsPerSlot) &&& slotsMask)
 
-    let minKeyInSameSlot (t : Key) (minKeyInSameSlotMask : MinKeyInSameSlotMask) : Key =
-      t &&& minKeyInSameSlotMask
+    let minKeyInSameSlot (t : Key) (minKeyInSameSlotMask : MinKeyInSameSlotMask) : Key = t &&& minKeyInSameSlotMask

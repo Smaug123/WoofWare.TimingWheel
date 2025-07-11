@@ -17,4 +17,3 @@ module IntervalNumSpan =
     let zero : IntervalNumSpan = 0L
     let one : IntervalNumSpan = 1L
     let maxValue : IntervalNumSpan = System.Int64.MaxValue
-

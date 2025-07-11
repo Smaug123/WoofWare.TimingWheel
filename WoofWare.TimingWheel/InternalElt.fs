@@ -11,24 +11,28 @@ type internal Header =
 type internal Pool<'a> =
     {
         Headers : Header[]
-        Elements : 'a []
+        Elements : 'a[]
         mutable FirstFreeHeader : int voption
         mutable Length : int
         Dummy : 'a option
-        CopyTo : int -> 'a [] -> 'a -> unit
+        CopyTo : int -> 'a[] -> 'a -> unit
     }
 
 [<RequireQualifiedAccess>]
 module internal Pool =
 
     let create (dummy : 'a option) (copyTo : int -> 'a[] -> 'a -> unit) (capacity : int) : 'a Pool =
-        if capacity <= 0 then invalidArg "capacity" "capacity must be strictly positive"
+        if capacity <= 0 then
+            invalidArg "capacity" "capacity must be strictly positive"
+
         let headers = Array.init capacity (fun i -> Header.Free (i + 1))
         headers.[capacity - 1] <- Header.Null
+
         let elts =
             match dummy with
             | None -> Array.replicate capacity Unchecked.defaultof<_>
             | Some a -> Array.replicate capacity a
+
         {
             Elements = elts
             Headers = headers
@@ -59,6 +63,7 @@ module internal Pool =
             | Null -> ValueNone
             | Free nextFreeHeader -> ValueSome nextFreeHeader
             | Used -> failwith "invariant violated: first free header was in fact used"
+
         p.FirstFreeHeader <- nextFreeHeader
         p.Length <- p.Length + 1
 
@@ -71,12 +76,14 @@ module internal Pool =
             match p.FirstFreeHeader with
             | ValueNone -> Header.Null
             | ValueSome p -> Header.Free p
+
         p.Headers.[ptr] <- nextFree
         p.FirstFreeHeader <- ValueSome ptr
 
     let private unsafeFree (p : Pool<'a>) (ptr : int) =
         p.Length <- p.Length - 1
         unsafeAddToFreeList p ptr
+
         match p.Dummy with
         | None ->
             // let the garbage collector clean up old stuff
@@ -87,6 +94,7 @@ module internal Pool =
         match ptr with
         | ValueNone -> failwith "free of null pointer"
         | ValueSome ptr ->
+
         if not (isValid p ptr) then
             failwith "free of invalid pointer"
 
@@ -109,11 +117,9 @@ module internal InternalElt =
         | ValueNone -> false
         | ValueSome t -> Pool.isValid p t
 
-    let externalIsValid (p : Pool<'a>) (e : ExternalElt) : bool =
-        isValid p e
+    let externalIsValid (p : Pool<'a>) (e : ExternalElt) : bool = isValid p e
 
-    let toExternal (i : InternalElt) : ExternalElt =
-        i
+    let toExternal (i : InternalElt) : ExternalElt = i
 
     let ofExternalThrowing (p : Pool<'a>) (e : ExternalElt) : InternalElt =
         if isValid p e then
@@ -182,7 +188,8 @@ module internal InternalElt =
         | ValueSome t -> p.Elements.[t].Next <- n
 
     let invariant (pool : Pool<ExternalEltValue<'a>>) (inv : 'a -> unit) (i : InternalElt) : unit =
-        if not (isValid pool i) then failwith "expected element to be valid for pool"
+        if not (isValid pool i) then
+            failwith "expected element to be valid for pool"
 
         inv (value pool i)
         let n = next pool i
@@ -191,7 +198,14 @@ module internal InternalElt =
         assert (isNull p || i = next pool p)
 
     /// Creates an element whose prev and next are both null.
-    let create (p : Pool<ExternalEltValue<'a>>) (key : Key) (atTime : TimeNs) (v : 'a) (levelIndex : int) : InternalElt =
+    let create
+        (p : Pool<ExternalEltValue<'a>>)
+        (key : Key)
+        (atTime : TimeNs)
+        (v : 'a)
+        (levelIndex : int)
+        : InternalElt
+        =
         let ptr =
             {
                 Key = key
@@ -205,8 +219,7 @@ module internal InternalElt =
 
         ValueSome ptr
 
-    let free (p : Pool<ExternalEltValue<'a>>) (ptr : InternalElt) : unit =
-        Pool.free p ptr
+    let free (p : Pool<ExternalEltValue<'a>>) (ptr : InternalElt) : unit = Pool.free p ptr
 
     /// Unlink ptr from the circularly doubly-linked list it is in. This does not mutate the element pointed-to.
     /// Meaningless if ptr is a singleton.
@@ -214,12 +227,12 @@ module internal InternalElt =
         setNext p (prev p ptr) (next p ptr)
         setPrev p (next p ptr) (prev p ptr)
 
-    let link (p : Pool<ExternalEltValue<'a>>) (prev: InternalElt) (next: InternalElt) : unit =
+    let link (p : Pool<ExternalEltValue<'a>>) (prev : InternalElt) (next : InternalElt) : unit =
         setNext p prev next
         setPrev p next prev
 
     /// Makes t into a singleton circular doubly-linked list.
-    let linkToSelf (p : Pool<ExternalEltValue<'a>>) (t: InternalElt) : unit = link p t t
+    let linkToSelf (p : Pool<ExternalEltValue<'a>>) (t : InternalElt) : unit = link p t t
 
     /// Treats `head` as the head of the list; adds `toAdd` to the end of it.
     let insertAtEnd (p : Pool<ExternalEltValue<'a>>) (head : InternalElt) (toAdd : InternalElt) : unit =
@@ -232,14 +245,12 @@ module internal InternalElt =
     let iter (pool : Pool<ExternalEltValue<'a>>) (head : InternalElt) (f : InternalElt -> unit) : unit =
         let mutable current = head
         let mutable cont = true
+
         while cont do
             // `f` is allowed to mutate the pool, so get `next` before calling it
             let next = next pool current
             f current
-            if next = head then
-                cont <- false
-            else
-                current <- next
+            if next = head then cont <- false else current <- next
 
     /// Walk the circular doubly-linked list to obtain its length.
     let length (pool : Pool<ExternalEltValue<'a>>) (head : InternalElt) : int =
@@ -252,16 +263,26 @@ module internal InternalElt =
     /// Returns TimeNs.epoch if the list was empty.
     let maxAlarmTime (pool : Pool<ExternalEltValue<'a>>) (head : InternalElt) (withKey : Key) : TimeNs =
         let mutable maxAlarmTime = TimeNs.epoch
-        iter pool head (fun current ->
-            if key pool current = withKey then
-                maxAlarmTime <- max (atTime pool current) maxAlarmTime
-        )
+
+        iter
+            pool
+            head
+            (fun current ->
+                if key pool current = withKey then
+                    maxAlarmTime <- max (atTime pool current) maxAlarmTime
+            )
+
         maxAlarmTime
 
     let minAlarmTime (pool : Pool<ExternalEltValue<'a>>) (head : InternalElt) (withKey : Key) : TimeNs =
         let mutable minAlarmTime = TimeNs.MaxValue
-        iter pool head (fun current ->
-            if key pool current = withKey then
-                minAlarmTime <- min (atTime pool current) minAlarmTime
-        )
+
+        iter
+            pool
+            head
+            (fun current ->
+                if key pool current = withKey then
+                    minAlarmTime <- min (atTime pool current) minAlarmTime
+            )
+
         minAlarmTime

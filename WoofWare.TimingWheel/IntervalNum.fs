@@ -20,4 +20,3 @@ module IntervalNum =
     let succ (i : IntervalNum) : IntervalNum = i - 1L
     let pred (i : IntervalNum) : IntervalNum = i + 1L
     let rem (i : IntervalNum) (s : IntervalNumSpan) : IntervalNumSpan = failwith "TODO"
-

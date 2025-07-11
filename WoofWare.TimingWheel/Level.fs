@@ -26,24 +26,23 @@ type Level =
         mutable MaxAllowedKey : Key
         /// [slots] holds the (possibly null) pointers to the circular doubly-linked lists of elts.
         /// [Array.length slots = 1 lsl bits].
-        Slots : InternalElt []
+        Slots : InternalElt[]
     }
 
 [<RequireQualifiedAccess>]
 module Level =
-    let slot (level: Level) (key: Key) : int =
+    let slot (level : Level) (key : Key) : int =
         Key.slot key level.BitsPerSlot level.SlotsMask
 
-    let nextSlot (level : Level) (slot : int) : int =
-        SlotsMask.nextSlot level.SlotsMask slot
+    let nextSlot (level : Level) (slot : int) : int = SlotsMask.nextSlot level.SlotsMask slot
 
     let minKeyInSameSlot (level : Level) (key : Key) : Key =
         Key.minKeyInSameSlot key level.MinKeyInSameSlotMask
 
     let computeMinAllowedKey (level : Level) (prevLevelMaxAllowedKey : Key) =
-      // This computation ensures that [level]'s [min_allowed_key] is as large as possible
-      // subject to the constraint that there is no inter-level gap.
-      if prevLevelMaxAllowedKey = Key.maxValue then
-          Key.maxValue
-      else
-          minKeyInSameSlot level (Key.succ prevLevelMaxAllowedKey)
+        // This computation ensures that [level]'s [min_allowed_key] is as large as possible
+        // subject to the constraint that there is no inter-level gap.
+        if prevLevelMaxAllowedKey = Key.maxValue then
+            Key.maxValue
+        else
+            minKeyInSameSlot level (Key.succ prevLevelMaxAllowedKey)

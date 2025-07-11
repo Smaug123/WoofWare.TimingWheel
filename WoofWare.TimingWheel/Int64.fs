@@ -6,5 +6,4 @@ module internal Int64 =
         if i <= 0L then
             invalidArg "x" "Input must be positive"
         else
-            63 - System.Numerics.BitOperations.LeadingZeroCount(uint64 i)
-
+            63 - System.Numerics.BitOperations.LeadingZeroCount (uint64 i)
