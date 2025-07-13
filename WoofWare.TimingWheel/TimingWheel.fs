@@ -21,7 +21,7 @@ module TimingWheel =
     module Alarm =
         let null' : Alarm = Elt.null'
         let atTime (tw : TimingWheel<ExternalEltValue<'a>>) (t : ExternalElt) : TimeNs = Elt.at tw.PriorityQueue t
-        let value (tw : TimingWheel<ExternalEltValue<'a>>) (t : ExternalElt) : 'a = Elt.value tw.PriorityQueue t
+        let value<'a> (tw : TimingWheel<ExternalEltValue<'a>>) (t : ExternalElt) : 'a = Elt.value tw.PriorityQueue t
         let intervalNum (tw : TimingWheel<ExternalEltValue<'a>>) (t : ExternalElt) : Key = Elt.key tw.PriorityQueue t
 
 

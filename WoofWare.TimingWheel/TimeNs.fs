@@ -14,6 +14,10 @@ module TimeNs =
         let toInt64Ns (s : Span) : int64 = s
         let zero : Span = 0L
 
+        let scaleInt64 (s : Span) (i : int64) : Span = s * i
+
+        let scaleInt (s : Span) (i : int) : Span = scaleInt64 s (int64<int> i)
+
         [<Literal>]
         let nanosecond : Span = 1L
 

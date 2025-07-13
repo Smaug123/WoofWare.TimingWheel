@@ -130,17 +130,26 @@ module TestTimingWheel =
             return messages
         }
 
+    let create<'a>
+        (extendToMaxNumBits : bool option)
+        (levelBits : int list option)
+        (start : TimeNs option)
+        (alarmPrecision : TimeNs option)
+        : TimingWheel<ExternalEltValue<'a>>
+        =
+        let start = start |> Option.defaultValue TimeNs.epoch
+        let alarmPrecision = alarmPrecision |> Option.defaultValue (gibiNanos 1.0)
+
+        let config = createConfig extendToMaxNumBits levelBits alarmPrecision
+        TimingWheel.create config start
+
     let createUnit
         (extendToMaxNumBits : bool option)
         (levelBits : int list option)
         (start : TimeNs option)
         (alarmPrecision : TimeNs option)
         =
-        let start = start |> Option.defaultValue TimeNs.epoch
-        let alarmPrecision = alarmPrecision |> Option.defaultValue (gibiNanos 1.0)
-
-        let config = createConfig extendToMaxNumBits levelBits alarmPrecision
-        TimingWheel.create<unit> config start
+        create<unit> extendToMaxNumBits levelBits start alarmPrecision
 
     [<Test>]
     let ``min and maxAllowedAlarmIntervalNum`` () =
@@ -867,7 +876,7 @@ alarms:
         let toTime = TimeNs.add t.Now (gibiNanos 1.0)
         TimingWheel.advanceClock t toTime ignore
 
-        expect' {
+        expect {
             snapshot
                 @"config: 01s.073741800 (1073741824 ns) : (11, 10, 10, 2)
 start: 1970-01-01T00:00:00.0000000Z
@@ -879,328 +888,335 @@ alarms:
             return TimingWheel.display t
         }
 
+    [<TestCase(false, 1)>]
+    [<TestCase(false, 2)>]
+    [<TestCase(true, 1)>]
+    [<TestCase(true, 2)>]
+    let ``min alarm at maxTime`` (advanceToMax : bool, ns : int) =
+        let alarmPrecision = TimeNs.Span.scaleInt TimeNs.Span.nanosecond ns
+        let t = createUnit (Some true) (Some [ 1 ]) None (Some alarmPrecision)
+
+        if advanceToMax then
+            TimingWheel.advanceClock t TimingWheel.maxTime ignore
+
+        TimingWheel.add t TimingWheel.maxTime () |> ignore<ExternalElt>
+
+        TimingWheel.minAlarmIntervalNumThrowing t
+        |> shouldEqual (TimingWheel.intervalNum t TimingWheel.maxTime)
+
+    let testAdvanceClockToMaxTime (ns : int) : string =
+        let messages = ResizeArray ()
+        let alarmPrecision = TimeNs.Span.scaleInt TimeNs.Span.nanosecond ns
+
+        for level0Bits = 1 to 3 do
+            let t =
+                create<unit -> unit> (Some true) (Some [ level0Bits ]) None (Some alarmPrecision)
+
+            messages.Add $"((alarmPrecision {alarmPrecision}ns) (level0_bits {level0Bits}))"
+
+            for i = 10 downto 0 do
+                TimingWheel.add
+                    t
+                    (TimingWheel.maxTime - TimeNs.Span.ofInt64Ns (int64<int> i))
+                    (fun () -> messages.Add $"(alarm (i %i{i}))")
+                |> ignore<ExternalElt>
+
+            for i = 10 downto 0 do
+                messages.Add $"(advance (i {i}))"
+
+                TimingWheel.advanceClock
+                    t
+                    (TimingWheel.maxTime - TimeNs.Span.ofInt64Ns (int64<int> i))
+                    (fun a -> TimingWheel.Alarm.value t a ())
+
+        messages |> String.concat "\n"
+
+    [<Test>]
+    let ``advanceClock to max time, 1`` () =
+        let messages = testAdvanceClockToMaxTime 1
+
+        expect {
+            snapshot
+                @"((alarmPrecision 1ns) (level0_bits 1))
+(advance (i 10))
+(advance (i 9))
+(alarm (i 10))
+(advance (i 8))
+(alarm (i 9))
+(advance (i 7))
+(alarm (i 8))
+(advance (i 6))
+(alarm (i 7))
+(advance (i 5))
+(alarm (i 6))
+(advance (i 4))
+(alarm (i 5))
+(advance (i 3))
+(alarm (i 4))
+(advance (i 2))
+(alarm (i 3))
+(advance (i 1))
+(alarm (i 2))
+(advance (i 0))
+(alarm (i 1))
+((alarmPrecision 1ns) (level0_bits 2))
+(advance (i 10))
+(advance (i 9))
+(alarm (i 10))
+(advance (i 8))
+(alarm (i 9))
+(advance (i 7))
+(alarm (i 8))
+(advance (i 6))
+(alarm (i 7))
+(advance (i 5))
+(alarm (i 6))
+(advance (i 4))
+(alarm (i 5))
+(advance (i 3))
+(alarm (i 4))
+(advance (i 2))
+(alarm (i 3))
+(advance (i 1))
+(alarm (i 2))
+(advance (i 0))
+(alarm (i 1))
+((alarmPrecision 1ns) (level0_bits 3))
+(advance (i 10))
+(advance (i 9))
+(alarm (i 10))
+(advance (i 8))
+(alarm (i 9))
+(advance (i 7))
+(alarm (i 8))
+(advance (i 6))
+(alarm (i 7))
+(advance (i 5))
+(alarm (i 6))
+(advance (i 4))
+(alarm (i 5))
+(advance (i 3))
+(alarm (i 4))
+(advance (i 2))
+(alarm (i 3))
+(advance (i 1))
+(alarm (i 2))
+(advance (i 0))
+(alarm (i 1))"
+
+            return messages
+        }
+
+    [<Test>]
+    let ``advanceClock to max time, 2`` () =
+        let messages = testAdvanceClockToMaxTime 2
+
+        expect {
+            snapshot
+                @"((alarmPrecision 2ns) (level0_bits 1))
+(advance (i 10))
+(advance (i 9))
+(alarm (i 10))
+(advance (i 8))
+(advance (i 7))
+(alarm (i 9))
+(alarm (i 8))
+(advance (i 6))
+(advance (i 5))
+(alarm (i 7))
+(alarm (i 6))
+(advance (i 4))
+(advance (i 3))
+(alarm (i 5))
+(alarm (i 4))
+(advance (i 2))
+(advance (i 1))
+(alarm (i 3))
+(alarm (i 2))
+(advance (i 0))
+((alarmPrecision 2ns) (level0_bits 2))
+(advance (i 10))
+(advance (i 9))
+(alarm (i 10))
+(advance (i 8))
+(advance (i 7))
+(alarm (i 9))
+(alarm (i 8))
+(advance (i 6))
+(advance (i 5))
+(alarm (i 7))
+(alarm (i 6))
+(advance (i 4))
+(advance (i 3))
+(alarm (i 5))
+(alarm (i 4))
+(advance (i 2))
+(advance (i 1))
+(alarm (i 3))
+(alarm (i 2))
+(advance (i 0))
+((alarmPrecision 2ns) (level0_bits 3))
+(advance (i 10))
+(advance (i 9))
+(alarm (i 10))
+(advance (i 8))
+(advance (i 7))
+(alarm (i 9))
+(alarm (i 8))
+(advance (i 6))
+(advance (i 5))
+(alarm (i 7))
+(alarm (i 6))
+(advance (i 4))
+(advance (i 3))
+(alarm (i 5))
+(alarm (i 4))
+(advance (i 2))
+(advance (i 1))
+(alarm (i 3))
+(alarm (i 2))
+(advance (i 0))"
+
+            return messages
+        }
+
+    [<Test>]
+    let ``advanceClock to max time, 4`` () =
+        let messages = testAdvanceClockToMaxTime 4
+
+        expect {
+            snapshot
+                @"((alarmPrecision 4ns) (level0_bits 1))
+(advance (i 10))
+(advance (i 9))
+(advance (i 8))
+(advance (i 7))
+(alarm (i 10))
+(alarm (i 9))
+(alarm (i 8))
+(advance (i 6))
+(advance (i 5))
+(advance (i 4))
+(advance (i 3))
+(alarm (i 7))
+(alarm (i 6))
+(alarm (i 5))
+(alarm (i 4))
+(advance (i 2))
+(advance (i 1))
+(advance (i 0))
+((alarmPrecision 4ns) (level0_bits 2))
+(advance (i 10))
+(advance (i 9))
+(advance (i 8))
+(advance (i 7))
+(alarm (i 10))
+(alarm (i 9))
+(alarm (i 8))
+(advance (i 6))
+(advance (i 5))
+(advance (i 4))
+(advance (i 3))
+(alarm (i 7))
+(alarm (i 6))
+(alarm (i 5))
+(alarm (i 4))
+(advance (i 2))
+(advance (i 1))
+(advance (i 0))
+((alarmPrecision 4ns) (level0_bits 3))
+(advance (i 10))
+(advance (i 9))
+(advance (i 8))
+(advance (i 7))
+(alarm (i 10))
+(alarm (i 9))
+(alarm (i 8))
+(advance (i 6))
+(advance (i 5))
+(advance (i 4))
+(advance (i 3))
+(alarm (i 7))
+(alarm (i 6))
+(alarm (i 5))
+(alarm (i 4))
+(advance (i 2))
+(advance (i 1))
+(advance (i 0))"
+
+            return messages
+        }
+
+    [<Test>]
+    let ``isEmpty, length`` () =
+        let t = createUnit None None None None
+        TimingWheel.isEmpty t |> shouldEqual true
+        TimingWheel.length t |> shouldEqual 0
+
+        let alarm = TimingWheel.add t t.Now ()
+        TimingWheel.isEmpty t |> shouldEqual false
+        TimingWheel.length t |> shouldEqual 1
+
+        TimingWheel.remove t alarm
+        TimingWheel.isEmpty t |> shouldEqual true
+        TimingWheel.length t |> shouldEqual 0
+
+    [<Test>]
+    let ``test iter 3`` () =
+        let t = createUnit None None None None
+        TimingWheel.iter t (fun _ -> failwith "nothing to iter")
+
+        let alarm1 = TimingWheel.add t t.Now ()
+        TimingWheel.iter t (fun alarm -> alarm |> shouldEqual alarm1)
+
+        let alarm2 = TimingWheel.add t t.Now ()
+
+        do
+            let mutable r = 0
+
+            TimingWheel.iter
+                t
+                (fun alarm ->
+                    r <- r + 1
+                    (alarm = alarm1 || alarm = alarm2) |> shouldEqual true
+                )
+
+            r |> shouldEqual 2
+
+        TimingWheel.remove t alarm1
+        TimingWheel.remove t alarm2
+        TimingWheel.iter t (fun _ -> failwith "nothing to iter")
+
+    [<Test>]
+    let ``access to a removed alarm doesn't segfault`` () =
+        let config =
+            Config.create None LevelBits.default' (gibiNanos 1.0 |> AlarmPrecision.ofSpanFloorPow2Ns)
+
+        let t = TimingWheel.create config TimeNs.epoch
+
+        let alarm = TimingWheel.add t (TimeNs.add t.Now (gibiNanos 5.0)) (ref 1)
+
+        TimingWheel.mem t alarm |> shouldEqual true
+        TimingWheel.remove t alarm
+
+        TimingWheel.mem t alarm |> shouldEqual false
+
+        expect {
+            snapshotThrows @"System.Exception: TimingWheel got invalid alarm"
+            return! fun () -> TimingWheel.Alarm.intervalNum t alarm
+        }
+
+        expect' {
+            snapshotThrows @"System.Exception: TimingWheel got invalid alarm"
+            return! fun () -> TimingWheel.Alarm.atTime t alarm
+        }
+
+        expect {
+            snapshotThrows @"System.Exception: TimingWheel got invalid alarm"
+            return! fun () -> TimingWheel.Alarm.value t alarm
+        }
+
 (*
-let%expect_test "min alarm at [max_time]" =
-  List.iter [ false; true ] ~f:(fun advance_to_max ->
-    List.iter [ 1; 2 ] ~f:(fun ns ->
-      let alarm_precision = Time_ns.Span.scale_int Time_ns.Span.nanosecond ns in
-      let t =
-        create_unit ~alarm_precision ~level_bits:[ 1 ] ~extend_to_max_num_bits:true ()
-      in
-      if advance_to_max then advance_clock t ~to_:max_time ~handle_fired:ignore;
-      ignore (add t ~at:max_time () : _ Alarm.t);
-      print_s [%message "" (advance_to_max : bool) (ns : int)];
-      require_equal
-        (module Interval_num)
-        (min_alarm_interval_num_exn t)
-        (interval_num t max_time)));
-  [%expect
-    {|
-    ((advance_to_max false)
-     (ns             1))
-    ((advance_to_max false)
-     (ns             2))
-    ((advance_to_max true)
-     (ns             1))
-    ((advance_to_max true)
-     (ns             2))
-    |}]
-;;
-
-let%expect_test "[advance_clock ~to_:max_time]" =
-  List.iter [ 1; 2; 4 ] ~f:(fun ns ->
-    let alarm_precision = Time_ns.Span.scale_int Time_ns.Span.nanosecond ns in
-    for level0_bits = 1 to 3 do
-      require_does_not_raise ~cr:CR_soon (fun () ->
-        let t =
-          create_unit
-            ~alarm_precision
-            ~level_bits:[ level0_bits ]
-            ~extend_to_max_num_bits:true
-            ()
-        in
-        print_s [%message "" (alarm_precision : Time_ns.Span.t) (level0_bits : int)];
-        for i = 10 downto 0 do
-          ignore
-            (add
-               t
-               ~at:(Time_ns.sub max_time (Time_ns.Span.of_int_ns i))
-               (fun () -> print_s [%message "alarm" (i : int)])
-             : _ Alarm.t)
-        done;
-        for i = 10 downto 0 do
-          print_s [%message "advance" (i : int)];
-          advance_clock
-            t
-            ~to_:(Time_ns.sub max_time (Time_ns.Span.of_int_ns i))
-            ~handle_fired:(fun a -> Alarm.value t a ())
-        done)
-    done);
-  [%expect
-    {|
-    ((alarm_precision 1ns)
-     (level0_bits     1))
-    (advance (i 10))
-    (advance (i 9))
-    (alarm (i 10))
-    (advance (i 8))
-    (alarm (i 9))
-    (advance (i 7))
-    (alarm (i 8))
-    (advance (i 6))
-    (alarm (i 7))
-    (advance (i 5))
-    (alarm (i 6))
-    (advance (i 4))
-    (alarm (i 5))
-    (advance (i 3))
-    (alarm (i 4))
-    (advance (i 2))
-    (alarm (i 3))
-    (advance (i 1))
-    (alarm (i 2))
-    (advance (i 0))
-    (alarm (i 1))
-    ((alarm_precision 1ns)
-     (level0_bits     2))
-    (advance (i 10))
-    (advance (i 9))
-    (alarm (i 10))
-    (advance (i 8))
-    (alarm (i 9))
-    (advance (i 7))
-    (alarm (i 8))
-    (advance (i 6))
-    (alarm (i 7))
-    (advance (i 5))
-    (alarm (i 6))
-    (advance (i 4))
-    (alarm (i 5))
-    (advance (i 3))
-    (alarm (i 4))
-    (advance (i 2))
-    (alarm (i 3))
-    (advance (i 1))
-    (alarm (i 2))
-    (advance (i 0))
-    (alarm (i 1))
-    ((alarm_precision 1ns)
-     (level0_bits     3))
-    (advance (i 10))
-    (advance (i 9))
-    (alarm (i 10))
-    (advance (i 8))
-    (alarm (i 9))
-    (advance (i 7))
-    (alarm (i 8))
-    (advance (i 6))
-    (alarm (i 7))
-    (advance (i 5))
-    (alarm (i 6))
-    (advance (i 4))
-    (alarm (i 5))
-    (advance (i 3))
-    (alarm (i 4))
-    (advance (i 2))
-    (alarm (i 3))
-    (advance (i 1))
-    (alarm (i 2))
-    (advance (i 0))
-    (alarm (i 1))
-    ((alarm_precision 2ns)
-     (level0_bits     1))
-    (advance (i 10))
-    (advance (i 9))
-    (alarm (i 10))
-    (advance (i 8))
-    (advance (i 7))
-    (alarm (i 9))
-    (alarm (i 8))
-    (advance (i 6))
-    (advance (i 5))
-    (alarm (i 7))
-    (alarm (i 6))
-    (advance (i 4))
-    (advance (i 3))
-    (alarm (i 5))
-    (alarm (i 4))
-    (advance (i 2))
-    (advance (i 1))
-    (alarm (i 3))
-    (alarm (i 2))
-    (advance (i 0))
-    ((alarm_precision 2ns)
-     (level0_bits     2))
-    (advance (i 10))
-    (advance (i 9))
-    (alarm (i 10))
-    (advance (i 8))
-    (advance (i 7))
-    (alarm (i 9))
-    (alarm (i 8))
-    (advance (i 6))
-    (advance (i 5))
-    (alarm (i 7))
-    (alarm (i 6))
-    (advance (i 4))
-    (advance (i 3))
-    (alarm (i 5))
-    (alarm (i 4))
-    (advance (i 2))
-    (advance (i 1))
-    (alarm (i 3))
-    (alarm (i 2))
-    (advance (i 0))
-    ((alarm_precision 2ns)
-     (level0_bits     3))
-    (advance (i 10))
-    (advance (i 9))
-    (alarm (i 10))
-    (advance (i 8))
-    (advance (i 7))
-    (alarm (i 9))
-    (alarm (i 8))
-    (advance (i 6))
-    (advance (i 5))
-    (alarm (i 7))
-    (alarm (i 6))
-    (advance (i 4))
-    (advance (i 3))
-    (alarm (i 5))
-    (alarm (i 4))
-    (advance (i 2))
-    (advance (i 1))
-    (alarm (i 3))
-    (alarm (i 2))
-    (advance (i 0))
-    ((alarm_precision 4ns)
-     (level0_bits     1))
-    (advance (i 10))
-    (advance (i 9))
-    (advance (i 8))
-    (advance (i 7))
-    (alarm (i 10))
-    (alarm (i 9))
-    (alarm (i 8))
-    (advance (i 6))
-    (advance (i 5))
-    (advance (i 4))
-    (advance (i 3))
-    (alarm (i 7))
-    (alarm (i 6))
-    (alarm (i 5))
-    (alarm (i 4))
-    (advance (i 2))
-    (advance (i 1))
-    (advance (i 0))
-    ((alarm_precision 4ns)
-     (level0_bits     2))
-    (advance (i 10))
-    (advance (i 9))
-    (advance (i 8))
-    (advance (i 7))
-    (alarm (i 10))
-    (alarm (i 9))
-    (alarm (i 8))
-    (advance (i 6))
-    (advance (i 5))
-    (advance (i 4))
-    (advance (i 3))
-    (alarm (i 7))
-    (alarm (i 6))
-    (alarm (i 5))
-    (alarm (i 4))
-    (advance (i 2))
-    (advance (i 1))
-    (advance (i 0))
-    ((alarm_precision 4ns)
-     (level0_bits     3))
-    (advance (i 10))
-    (advance (i 9))
-    (advance (i 8))
-    (advance (i 7))
-    (alarm (i 10))
-    (alarm (i 9))
-    (alarm (i 8))
-    (advance (i 6))
-    (advance (i 5))
-    (advance (i 4))
-    (advance (i 3))
-    (alarm (i 7))
-    (alarm (i 6))
-    (alarm (i 5))
-    (alarm (i 4))
-    (advance (i 2))
-    (advance (i 1))
-    (advance (i 0))
-    |}]
-;;
-
-let%expect_test "[is_empty], [length]" =
-  let t = create_unit () in
-  let show () =
-    print_s [%message "" ~is_empty:(is_empty t : bool) ~length:(length t : int)]
-  in
-  show ();
-  [%expect
-    {|
-    ((is_empty true)
-     (length   0))
-    |}];
-  let alarm = add t ~at:(now t) () in
-  show ();
-  [%expect
-    {|
-    ((is_empty false)
-     (length   1))
-    |}];
-  remove t alarm;
-  show ();
-  [%expect
-    {|
-    ((is_empty true)
-     (length   0))
-    |}]
-;;
-
-let%expect_test "[iter]" =
-  let t = create_unit () in
-  iter t ~f:(fun _ -> require false);
-  let alarm1 = add t ~at:(now t) () in
-  iter t ~f:(fun alarm -> require (phys_equal alarm alarm1));
-  let alarm2 = add t ~at:(now t) () in
-  let r = ref 0 in
-  iter t ~f:(fun alarm ->
-    require (phys_equal alarm alarm1 || phys_equal alarm alarm2);
-    incr r);
-  print_s [%message (r : int ref)];
-  [%expect {| (r 2) |}];
-  remove t alarm1;
-  remove t alarm2;
-  iter t ~f:(fun _ -> require false)
-;;
-
-let%expect_test "access to a removed alarm doesn't segfault" =
-  let t =
-    create
-      ~config:(create_config ~alarm_precision:(gibi_nanos 1.) ())
-      ~start:Time_ns.epoch
-  in
-  let alarm = add t ~at:(Time_ns.add (now t) (gibi_nanos 5.)) (ref 1) in
-  let show_mem () = print_s [%sexp (mem t alarm : bool)] in
-  show_mem ();
-  [%expect {| true |}];
-  remove t alarm;
-  show_mem ();
-  [%expect {| false |}];
-  require_does_raise (fun _ -> Alarm.interval_num t alarm);
-  [%expect {| "Timing_wheel got invalid alarm" |}];
-  require_does_raise (fun _ -> Alarm.at t alarm);
-  [%expect {| "Timing_wheel got invalid alarm" |}];
-  require_does_raise (fun _ -> Alarm.value t alarm);
-  [%expect {| "Timing_wheel got invalid alarm" |}]
-;;
-
 (* Check that [reschedule] and [reschedule_at_interval_num] leave an alarm in the timing
    wheel but reschedule its scheduled time. *)
 let test_reschedule reschedule =

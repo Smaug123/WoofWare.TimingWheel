@@ -48,16 +48,16 @@ module TestConfig =
         (alarmPrecision : TimeNs.Span)
         : Config
         =
-        Config.create
-            None
-            (levelBits
-             |> Option.map (fun l ->
-                 match extendToMaxNumBits with
-                 | None -> LevelBits.createThrowing l
-                 | Some extendToMaxNumBits -> LevelBits.createThrowing' extendToMaxNumBits l
-             )
-             |> Option.defaultValue LevelBits.default')
-            (alarmPrecision |> AlarmPrecision.ofSpanFloorPow2Ns)
+        let levelBits =
+            levelBits
+            |> Option.map (fun l ->
+                match extendToMaxNumBits with
+                | None -> LevelBits.createThrowing l
+                | Some extendToMaxNumBits -> LevelBits.createThrowing' extendToMaxNumBits l
+            )
+            |> Option.defaultValue LevelBits.default'
+
+        Config.create None levelBits (alarmPrecision |> AlarmPrecision.ofSpanFloorPow2Ns)
 
     [<Test>]
     let ``create with negative alarm precision`` () =
@@ -76,12 +76,9 @@ module TestConfig =
     [<Test>]
     let ``create with one second alarm precision`` () : unit =
         expect {
-            // TODO: this is wrong!
-            snapshot @"01s.073741800 (1073741824 ns) : (11, 10, 10, 1)"
+            snapshot @"01s.073741800 (1073741824 ns) : (11, 10, 10, 2)"
             return createConfig None None (gibiNanos 1.0) |> Config.display
         }
-
-        failwith "what's up there"
 
     [<Test>]
     let ``Config durations test`` () : unit =
