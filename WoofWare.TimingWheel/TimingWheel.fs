@@ -232,7 +232,10 @@ module TimingWheel =
         t
 
     let addAtIntervalNum (t : TimingWheel<ExternalEltValue<'a>>) (at : Key) (value : 'a) : ExternalElt =
-        InternalElt.toExternal (PriorityQueue.internalAdd t.PriorityQueue at (intervalNumStart t at) value)
+        let numStart = intervalNumStart t at
+
+        PriorityQueue.internalAdd t.PriorityQueue at numStart value
+        |> InternalElt.toExternal
 
     let raiseThatFarInTheFuture (t : TimingWheel<'a>) (at : TimeNs) : unit =
         failwith $"TimingWheel cannot schedule alarm that far in the future (max: {t.MaxAllowedAlarmTime}; got: {at})"

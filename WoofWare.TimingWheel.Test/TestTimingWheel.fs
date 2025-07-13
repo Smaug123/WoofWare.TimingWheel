@@ -290,17 +290,23 @@ mem2: False"
         (handleFired : ExternalElt -> unit)
         : unit
         =
-        TimingWheel.advanceClock t (TimingWheel.intervalNumStart t toNum) handleFired
+        let numStart = TimingWheel.intervalNumStart t toNum
+        TimingWheel.advanceClock t numStart handleFired
 
     [<Test>]
     let ``add failures`` () =
         let t = createUnit None (Some [ 1 ]) None None
 
         let add at =
-            ignore (TimingWheel.addAtIntervalNum t at)
+            ignore<ExternalElt> (TimingWheel.addAtIntervalNum t at ())
 
-        for intervalNum = IntervalNum.toIntThrowing (TimingWheel.minAllowedAlarmIntervalNum t) to IntervalNum
-            .toIntThrowing (TimingWheel.maxAllowedAlarmIntervalNum t) do
+        let minTime t =
+            IntervalNum.toIntThrowing (TimingWheel.minAllowedAlarmIntervalNum t)
+
+        let maxTime t =
+            IntervalNum.toIntThrowing (TimingWheel.maxAllowedAlarmIntervalNum t)
+
+        for intervalNum = minTime t to maxTime t do
             add (IntervalNum.ofInt intervalNum)
 
         let checkAddsFail () =
@@ -324,7 +330,8 @@ mem2: False"
         checkAddsFail ()
         advanceClockToIntervalNum t TimeNs.maxValueRepresentable ignore
         checkAddsFail ()
-(*
+
+    (*
 let%expect_test "[add] failures" =
   let t = create_unit () ~level_bits:[ 1 ] in
   let add ~at = ignore (add_at_interval_num t ~at () : _ Alarm.t) in
@@ -420,101 +427,119 @@ let%expect_test "[add] failures" =
      (t.max_interval_num 4_294_967_295))
     |}]
 ;;
+ *)
 
-let%expect_test "[clear]" =
-  let t = create_unit () ~level_bits:[ 1; 1 ] in
-  clear t;
-  let _e1 = add_at_interval_num t ~at:Interval_num.zero () in
-  let _e2 = add_at_interval_num t ~at:(Interval_num.of_int 2) () in
-  show t;
-  [%expect
-    {|
-    ((config ((alarm_precision 1.073741824s) (level_bits (1 1))))
-     (start            "1970-01-01 00:00:00Z")
-     (max_interval_num 4_294_967_295)
-     (now              "1970-01-01 00:00:00Z")
-     (alarms (
-       ((at "1970-01-01 00:00:00Z")           (value _))
-       ((at "1970-01-01 00:00:02.147483648Z") (value _)))))
-    |}];
-  clear t;
-  show t;
-  [%expect
-    {|
-    ((config ((alarm_precision 1.073741824s) (level_bits (1 1))))
-     (start            "1970-01-01 00:00:00Z")
-     (max_interval_num 4_294_967_295)
-     (now              "1970-01-01 00:00:00Z")
-     (alarms ()))
-    |}]
-;;
+    [<Test>]
+    let ``test clear`` () =
+        let t = createUnit None (Some [ 1 ; 1 ]) None None
+        TimingWheel.clear t
+        let _ = TimingWheel.addAtIntervalNum t IntervalNum.zero ()
+        let _ = TimingWheel.addAtIntervalNum t (IntervalNum.ofInt 2) ()
 
-let advance_clock_to_interval_num_return_removed_interval_nums t ~to_ =
-  let r = ref [] in
-  let handle_fired alarm = r := Alarm.interval_num t alarm :: !r in
-  advance_clock_to_interval_num t ~to_ ~handle_fired;
-  !r
-;;
+        expect {
+            snapshot
+                @"config: 01s.073741800 (1073741824 ns) : (1, 1)
+start: 1970-01-01T00:00:00.0000000Z
+maxIntervalNum: 8589934591
+now: 1970-01-01T00:00:00.0000000Z
+alarms:
+1970-01-01T00:00:00.0000000Z
+1970-01-01T00:00:02.1474836Z
+"
 
-let%expect_test "[advance_clock] to max interval num" =
-  let t = create_unit () ~level_bits:[ 1 ] in
-  let add ~at = ignore (add_at_interval_num t ~at () : _ Alarm.t) in
-  add ~at:Interval_num.zero;
-  add ~at:Interval_num.one;
-  require_does_raise (fun () ->
-    advance_clock_to_interval_num t ~to_:Interval_num.max_value ~handle_fired:ignore);
-  [%expect
-    {|
-    ("Timing_wheel.interval_num_start got too large interval_num"
-     (interval_num       4_611_686_018_427_387_903)
-     (t.max_interval_num 4_294_967_295))
-    |}];
-  let max_interval_num = interval_num t Private.max_time in
-  advance_clock_to_interval_num t ~to_:max_interval_num ~handle_fired:ignore;
-  show t;
-  [%expect
-    {|
-    ((config ((alarm_precision 1.073741824s) (level_bits (1))))
-     (start            "1970-01-01 00:00:00Z")
-     (max_interval_num 4_294_967_295)
-     (now              "2116-02-20 23:53:37.35364608Z")
-     (alarms ()))
-    |}];
-  add ~at:max_interval_num;
-  show t;
-  [%expect
-    {|
-    ((config ((alarm_precision 1.073741824s) (level_bits (1))))
-     (start            "1970-01-01 00:00:00Z")
-     (max_interval_num 4_294_967_295)
-     (now              "2116-02-20 23:53:37.35364608Z")
-     (alarms ((
-       (at    "2116-02-20 23:53:37.35364608Z")
-       (value _)))))
-    |}]
-;;
+            return TimingWheel.display t
+        }
 
+        TimingWheel.clear t
+
+        expect {
+            snapshot
+                @"config: 01s.073741800 (1073741824 ns) : (1, 1)
+start: 1970-01-01T00:00:00.0000000Z
+maxIntervalNum: 8589934591
+now: 1970-01-01T00:00:00.0000000Z
+alarms:
+"
+
+            return TimingWheel.display t
+        }
+
+    let advanceClockToIntervalNumReturnRemovedIntervalNums t toTime =
+        let r = ResizeArray ()
+        advanceClockToIntervalNum t toTime (fun alarm -> r.Add (TimingWheel.Alarm.intervalNum t alarm))
+        Seq.toList r
+
+    [<Test>]
+    let ``advanceClock to max interval num`` () =
+        let t = createUnit None (Some [ 1 ]) None None
+
+        let add atTime =
+            ignore<ExternalElt> (TimingWheel.addAtIntervalNum t atTime ())
+
+        add IntervalNum.zero
+        add IntervalNum.one
+
+        expect {
+            snapshotThrows
+                @"System.Exception: intervalNumStart got too large intervalNum: 9223372036854775807, max was 8589934591"
+
+            return! fun () -> advanceClockToIntervalNum t IntervalNum.maxValue ignore
+        }
+
+        let maxIntervalNum = TimingWheel.intervalNum t TimeNs.maxValueRepresentable
+        advanceClockToIntervalNum t maxIntervalNum ignore
+
+        expect {
+            snapshot
+                @"config: 01s.073741800 (1073741824 ns) : (1)
+start: 1970-01-01T00:00:00.0000000Z
+maxIntervalNum: 8589934591
+now: 2262-04-11T23:47:15.7810336Z
+alarms:
+"
+
+            return TimingWheel.display t
+        }
+
+        add maxIntervalNum
+
+        expect {
+            snapshot
+                @"config: 01s.073741800 (1073741824 ns) : (1)
+start: 1970-01-01T00:00:00.0000000Z
+maxIntervalNum: 8589934591
+now: 2262-04-11T23:47:15.7810336Z
+alarms:
+2262-04-11T23:47:15.7810336Z
+"
+
+            return TimingWheel.display t
+        }
+
+    /// [all_sums n] returns all combinations of nonnegative ints that sum to [n].
+    let allSums (n : int) : int list list =
+        let results = Array.create (n + 1) []
+        results.[0] <- [ [] ]
+
+        for i = 1 to n do
+            results.[i] <-
+                List.concat (
+                    List.init i (fun j -> let first = j + 1 in List.map (fun rest -> first :: rest) results.[i - first])
+                )
+
+        results.[n]
+
+    type InitialMinAllowedIntervalNum =
+        | Zero
+        | Large
+
+    [<Test>]
+    let ``test advanceClockToIntervalNum`` () : unit =
+        let mutable numTests = 0
+        failwith "TODO"
+    (*
 let%expect_test "[advance_clock_to_interval_num]" =
   let num_tests = ref 0 in
-  (* [all_sums n] returns all combinations of nonnegative ints that sum to [n]. *)
-  let all_sums n =
-    let results = Array.create ~len:(n + 1) [] in
-    results.(0) <- [ [] ];
-    for i = 1 to n do
-      results.(i)
-      <- List.concat
-           (List.init i ~f:(fun j ->
-              let first = j + 1 in
-              List.map results.(i - first) ~f:(fun rest -> first :: rest)))
-    done;
-    results.(n)
-  in
-  let module Initial_min_allowed_interval_num = struct
-    type t =
-      | Zero
-      | Large
-    [@@deriving enumerate, sexp_of]
-  end
   in
   let test
     ~num_bits
@@ -601,257 +626,260 @@ let%expect_test "[advance_clock_to_interval_num]" =
   [%expect {| (num_tests 4_096) |}]
 ;;
 
-module Interval_num_option = struct
-  type t = Interval_num.t option [@@deriving compare, sexp_of]
+ *)
+    [<Test>]
+    let ``test advanceClock`` () =
+        let t = createUnit None (Some [ 1 ; 1 ; 1 ; 1 ]) None None
 
-  let equal = [%compare.equal: t]
-end
+        TimingWheel.minAlarmIntervalNum t |> shouldEqual None
 
-let%expect_test "[advance_clock]" =
-  let t = create_unit () ~level_bits:[ 1; 1; 1; 1 ] in
-  require (is_none (min_alarm_interval_num t));
-  let _elt = add_at_interval_num t ~at:Interval_num.zero () in
-  require_equal
-    (module Interval_num_option)
-    (min_alarm_interval_num t)
-    (Some Interval_num.zero);
-  let max_interval_num = 10 in
-  for interval_num = 1 to max_interval_num do
-    let at = Interval_num.of_int interval_num in
-    require_does_not_raise (fun () -> ignore (add_at_interval_num t ~at () : _ Alarm.t));
-    require_equal
-      (module Interval_num_option)
-      (min_alarm_interval_num t)
-      (Some Interval_num.zero)
-  done;
-  for interval_num = 1 to max_interval_num + 1 do
-    let interval_num = Interval_num.of_int interval_num in
-    (match
-       advance_clock_to_interval_num_return_removed_interval_nums t ~to_:interval_num
-     with
-     | [ interval_num' ] ->
-       require_equal (module Interval_num) interval_num' (Interval_num.pred interval_num)
-     | _ -> require false);
-    require_equal
-      (module Interval_num_option)
-      (min_alarm_interval_num t)
-      (if Interval_num.( <= ) interval_num (Interval_num.of_int max_interval_num)
-       then Some interval_num
-       else None)
-  done
-;;
+        let _elt = TimingWheel.addAtIntervalNum t IntervalNum.zero ()
 
-let%expect_test "[min_alarm_interval_num]" =
-  let t = create_unit () ~level_bits:[ 1; 1; 1; 1 ] in
-  let max_interval_num = Interval_num.of_int 10 in
-  let elts =
-    List.init
-      (Interval_num.to_int_exn max_interval_num + 1)
-      ~f:(fun interval_num ->
-        add_at_interval_num t ~at:(Interval_num.of_int interval_num) ())
-  in
-  List.iter elts ~f:(fun elt ->
-    let interval_num = Alarm.interval_num t elt in
-    remove t elt;
-    require_equal
-      (module Interval_num_option)
-      (min_alarm_interval_num t)
-      (if Interval_num.( < ) interval_num max_interval_num
-       then Some (Interval_num.succ interval_num)
-       else None))
-;;
+        TimingWheel.minAlarmIntervalNum t |> shouldEqual (Some IntervalNum.zero)
 
-let%expect_test "[iter]" =
-  let t = create_unit () ~level_bits:[ 1; 1; 1; 1 ] in
-  let count () =
-    let r = ref 0 in
-    iter t ~f:(fun _ -> incr r);
-    !r
-  in
-  let show_count () = print_s [%sexp (count () : int)] in
-  show_count ();
-  [%expect {| 0 |}];
-  let num_elts = 10 in
-  for interval_num = 0 to num_elts - 1 do
-    ignore (add_at_interval_num t ~at:(Interval_num.of_int interval_num) () : _ Alarm.t)
-  done;
-  show_count ();
-  [%expect {| 10 |}];
-  advance_clock_to_interval_num t ~to_:Interval_num.one ~handle_fired:ignore;
-  show_count ();
-  [%expect {| 9 |}];
-  advance_clock_to_interval_num t ~to_:(Interval_num.of_int num_elts) ~handle_fired:ignore;
-  show_count ();
-  [%expect {| 0 |}]
-;;
+        let maxIntervalNum = 10
 
-let%expect_test "[iter]" =
-  let t = create_unit () ~level_bits:[ 1; 1; 1; 1 ] in
-  let elts = ref [] in
-  for interval_num = 0 to Interval_num.to_int_exn (max_allowed_alarm_interval_num t) do
-    elts := add_at_interval_num t ~at:(Interval_num.of_int interval_num) () :: !elts
-  done;
-  let elts' = ref [] in
-  iter t ~f:(fun elt -> elts' := elt :: !elts');
-  let sort elts =
-    List.sort elts ~compare:(fun elt1 elt2 ->
-      Interval_num.compare (Alarm.interval_num t elt1) (Alarm.interval_num t elt2))
-  in
-  require (List.equal phys_equal (sort !elts) (sort !elts'))
-;;
+        for intervalNum = 1 to maxIntervalNum do
+            let at = IntervalNum.ofInt intervalNum
+            ignore<ExternalElt> (TimingWheel.addAtIntervalNum t at ())
+            TimingWheel.minAlarmIntervalNum t |> shouldEqual (Some IntervalNum.zero)
 
-let%expect_test "start after epoch" =
-  let t = create_unit ~start:(Time_ns.add Time_ns.epoch (gibi_nanos 1.)) () in
-  invariant ignore t
-;;
+        for intervalNum = 1 to maxIntervalNum + 1 do
+            let intervalNum = IntervalNum.ofInt intervalNum
 
-let%expect_test "invalid alarm precision" =
-  let test alarm_precision =
-    require_does_raise (fun () -> create_unit ~alarm_precision ())
-  in
-  test (gibi_nanos (-1.));
-  [%expect
-    {|
-    ("[Alarm_precision.of_span_floor_pow2_ns] got non-positive span"
-     (span -1.073741824s))
-    |}];
-  test (gibi_nanos 0.);
-  [%expect
-    {| ("[Alarm_precision.of_span_floor_pow2_ns] got non-positive span" (span 0s)) |}]
-;;
+            match advanceClockToIntervalNumReturnRemovedIntervalNums t intervalNum with
+            | [ intervalNum' ] -> intervalNum' |> shouldEqual (IntervalNum.pred intervalNum)
+            | _ -> failwith "expected exactly one removed"
 
-let%expect_test "[Private.interval_num_internal]" =
-  for time = -5 to 4 do
-    print_s
-      [%message
-        ""
-          (time : int)
-          ~interval_num:
-            (Interval_num.to_int_exn
-               (Private.interval_num_internal
-                  ~alarm_precision:
-                    (Alarm_precision.of_span_floor_pow2_ns
-                       (Time_ns.Span.of_int63_ns (Int63.of_int 4)))
-                  ~time:(Time_ns.of_int_ns_since_epoch time))
-             : int)]
-  done;
-  [%expect
-    {|
-    ((time         -5)
-     (interval_num -2))
-    ((time         -4)
-     (interval_num -1))
-    ((time         -3)
-     (interval_num -1))
-    ((time         -2)
-     (interval_num -1))
-    ((time         -1)
-     (interval_num -1))
-    ((time         0)
-     (interval_num 0))
-    ((time         1)
-     (interval_num 0))
-    ((time         2)
-     (interval_num 0))
-    ((time         3)
-     (interval_num 0))
-    ((time         4)
-     (interval_num 1))
-    |}]
-;;
+            let expected =
+                if intervalNum <= IntervalNum.ofInt maxIntervalNum then
+                    Some intervalNum
+                else
+                    None
 
-let%expect_test "[interval_num_start], [interval_start]" =
-  let t = create_unit () in
-  require (not (mem t (Alarm.null ())));
-  let start = start t in
-  let test after =
-    let time = Time_ns.add start (gibi_nanos after) in
-    let interval_num = interval_num t time in
-    let interval_num_start = interval_num_start t interval_num in
-    let interval_start = interval_start t time in
-    print_s
-      [%message
-        ""
-          (interval_num : Interval_num.t)
-          (interval_num_start : Time_ns.t)
-          (interval_start : Time_ns.t)];
-    require (Time_ns.equal interval_num_start interval_start)
-  in
-  test 0.;
-  [%expect
-    {|
-    ((interval_num       0)
-     (interval_num_start "1970-01-01 00:00:00Z")
-     (interval_start     "1970-01-01 00:00:00Z"))
-    |}];
-  test 0.1;
-  [%expect
-    {|
-    ((interval_num       0)
-     (interval_num_start "1970-01-01 00:00:00Z")
-     (interval_start     "1970-01-01 00:00:00Z"))
-    |}];
-  test 0.99;
-  [%expect
-    {|
-    ((interval_num       0)
-     (interval_num_start "1970-01-01 00:00:00Z")
-     (interval_start     "1970-01-01 00:00:00Z"))
-    |}];
-  test 1.;
-  [%expect
-    {|
-    ((interval_num       1)
-     (interval_num_start "1970-01-01 00:00:01.073741824Z")
-     (interval_start     "1970-01-01 00:00:01.073741824Z"))
-    |}];
-  test 1.5;
-  [%expect
-    {|
-    ((interval_num       1)
-     (interval_num_start "1970-01-01 00:00:01.073741824Z")
-     (interval_start     "1970-01-01 00:00:01.073741824Z"))
-    |}];
-  test 1.99;
-  [%expect
-    {|
-    ((interval_num       1)
-     (interval_num_start "1970-01-01 00:00:01.073741824Z")
-     (interval_start     "1970-01-01 00:00:01.073741824Z"))
-    |}];
-  test 2.;
-  [%expect
-    {|
-    ((interval_num       2)
-     (interval_num_start "1970-01-01 00:00:02.147483648Z")
-     (interval_start     "1970-01-01 00:00:02.147483648Z"))
-    |}]
-;;
+            TimingWheel.minAlarmIntervalNum t |> shouldEqual expected
 
-let%expect_test "[advance_clock]" =
-  let t = create_unit () in
-  show t;
-  [%expect
-    {|
-    ((config ((alarm_precision 1.073741824s) (level_bits (11 10 10 1))))
-     (start            "1970-01-01 00:00:00Z")
-     (max_interval_num 4_294_967_295)
-     (now              "1970-01-01 00:00:00Z")
-     (alarms ()))
-    |}];
-  let to_ = Time_ns.add (now t) (gibi_nanos 1.) in
-  advance_clock t ~to_ ~handle_fired:ignore;
-  show t;
-  [%expect
-    {|
-    ((config ((alarm_precision 1.073741824s) (level_bits (11 10 10 1))))
-     (start            "1970-01-01 00:00:00Z")
-     (max_interval_num 4_294_967_295)
-     (now              "1970-01-01 00:00:01.073741824Z")
-     (alarms ()))
-    |}]
-;;
+    [<Test>]
+    let ``test minAlarmIntervalNum`` () =
+        let t = createUnit None (Some [ 1 ; 1 ; 1 ; 1 ]) None None
+        let maxIntervalNum = IntervalNum.ofInt 10
 
+        let elts =
+            List.init
+                (IntervalNum.toIntThrowing maxIntervalNum + 1)
+                (fun iv -> TimingWheel.addAtIntervalNum t (IntervalNum.ofInt iv) ())
+
+        for elt in elts do
+            let intervalNum = TimingWheel.Alarm.intervalNum t elt
+            TimingWheel.remove t elt
+
+            let expected =
+                if intervalNum < maxIntervalNum then
+                    Some (IntervalNum.succ intervalNum)
+                else
+                    None
+
+            TimingWheel.minAlarmIntervalNum t |> shouldEqual expected
+
+    [<Test>]
+    let ``test iter 1`` () =
+        let t = createUnit None (Some [ 1 ; 1 ; 1 ; 1 ]) None None
+
+        let count () =
+            let mutable r = 0
+            TimingWheel.iter t (fun _ -> r <- r + 1)
+            r
+
+        count () |> shouldEqual 0
+
+        let numElts = 10
+
+        for intervalNum = 0 to numElts - 1 do
+            ignore<ExternalElt> (TimingWheel.addAtIntervalNum t (IntervalNum.ofInt intervalNum) ())
+
+        count () |> shouldEqual numElts
+
+        advanceClockToIntervalNum t IntervalNum.one ignore
+        count () |> shouldEqual (numElts - 1)
+
+        advanceClockToIntervalNum t (IntervalNum.ofInt numElts) ignore
+        count () |> shouldEqual 0
+
+    [<Test>]
+    let ``test iter 2`` () =
+        let t = createUnit None (Some [ 1 ; 1 ; 1 ; 1 ]) None None
+        let expected = ResizeArray ()
+
+        for intervalNum = 0 to IntervalNum.toIntThrowing (TimingWheel.maxAllowedAlarmIntervalNum t) do
+            expected.Add (TimingWheel.addAtIntervalNum t (IntervalNum.ofInt intervalNum) ())
+
+        let expected = Seq.toList expected
+
+        let actual = ResizeArray ()
+        TimingWheel.iter t (fun elt -> actual.Add elt)
+        let actual = Seq.toList actual
+
+        let sort (elts : ExternalElt list) =
+            elts |> List.sortBy (fun e1 -> TimingWheel.Alarm.intervalNum t e1)
+
+        (sort actual) |> shouldEqual (sort expected)
+
+    [<Test>]
+    let ``start after epoch`` () =
+        let t = createUnit None None (Some (TimeNs.add TimeNs.epoch (gibiNanos 1.0))) None
+        TimingWheel.invariant ignore t
+
+    [<Test>]
+    let ``invalid alarm precision`` () =
+        let test alarmPrecision =
+            expect {
+                snapshotThrows @"System.ArgumentException: expected positive span (Parameter 'span')"
+                return! fun () -> createUnit None None None (Some alarmPrecision)
+            }
+
+        test (gibiNanos -1.0)
+        test (gibiNanos 0.0)
+
+    [<Test>]
+    let ``test intervalNumInternal`` () =
+        let messages = ResizeArray ()
+
+        for time = -5 to 4 do
+            let actual =
+                AlarmPrecision.ofSpanFloorPow2Ns (TimeNs.Span.ofInt64Ns 4L)
+                |> TimingWheel.intervalNumInternal (TimeNs.ofInt64NsSinceEpoch (int64<int> time))
+                |> IntervalNum.toIntThrowing
+
+            $"%i{time}: %i{actual}" |> messages.Add
+
+        expect {
+            snapshotJson
+                @"[
+  ""-5: -2"",
+  ""-4: -1"",
+  ""-3: -1"",
+  ""-2: -1"",
+  ""-1: -1"",
+  ""0: 0"",
+  ""1: 0"",
+  ""2: 0"",
+  ""3: 0"",
+  ""4: 1""
+]"
+
+            return messages
+        }
+
+    [<Test>]
+    let ``intervalNumStart, intervalStart`` () =
+        let t = createUnit None None None None
+        TimingWheel.mem t TimingWheel.Alarm.null' |> shouldEqual false
+
+        let start = t.Start
+
+        let test after =
+            let time = TimeNs.add start (gibiNanos after)
+            let intervalNum = TimingWheel.intervalNum t time
+            let intervalNumStart = TimingWheel.intervalNumStart t intervalNum
+            let intervalStart = TimingWheel.intervalStart t time
+
+            $"intervalNum: %i{intervalNum}\nintervalNumStart: %s{TimeNs.format intervalNumStart}\nintervalStart:    %s{TimeNs.format intervalStart}"
+
+        expect {
+            snapshot
+                @"intervalNum: 0
+intervalNumStart: 1970-01-01T00:00:00.0000000Z
+intervalStart:    1970-01-01T00:00:00.0000000Z"
+
+            return test 0.0
+        }
+
+        expect {
+            snapshot
+                @"intervalNum: 0
+intervalNumStart: 1970-01-01T00:00:00.0000000Z
+intervalStart:    1970-01-01T00:00:00.0000000Z"
+
+            return test 0.1
+        }
+
+        expect {
+            snapshot
+                @"intervalNum: 0
+intervalNumStart: 1970-01-01T00:00:00.0000000Z
+intervalStart:    1970-01-01T00:00:00.0000000Z"
+
+            return test 0.99
+        }
+
+        expect {
+            snapshot
+                @"intervalNum: 1
+intervalNumStart: 1970-01-01T00:00:01.0737418Z
+intervalStart:    1970-01-01T00:00:01.0737418Z"
+
+            return test 1.0
+        }
+
+        expect {
+            snapshot
+                @"intervalNum: 1
+intervalNumStart: 1970-01-01T00:00:01.0737418Z
+intervalStart:    1970-01-01T00:00:01.0737418Z"
+
+            return test 1.5
+        }
+
+        expect {
+            snapshot
+                @"intervalNum: 1
+intervalNumStart: 1970-01-01T00:00:01.0737418Z
+intervalStart:    1970-01-01T00:00:01.0737418Z"
+
+            return test 1.99
+        }
+
+        expect {
+            snapshot
+                @"intervalNum: 2
+intervalNumStart: 1970-01-01T00:00:02.1474836Z
+intervalStart:    1970-01-01T00:00:02.1474836Z"
+
+            return test 2.0
+        }
+
+    [<Test>]
+    let ``test advanceClock 2`` () =
+        let t = createUnit None None None None
+
+        expect {
+            snapshot
+                @"config: 01s.073741800 (1073741824 ns) : (11, 10, 10, 2)
+start: 1970-01-01T00:00:00.0000000Z
+maxIntervalNum: 8589934591
+now: 1970-01-01T00:00:00.0000000Z
+alarms:
+"
+
+            return TimingWheel.display t
+        }
+
+        let toTime = TimeNs.add t.Now (gibiNanos 1.0)
+        TimingWheel.advanceClock t toTime ignore
+
+        expect' {
+            snapshot
+                @"config: 01s.073741800 (1073741824 ns) : (11, 10, 10, 2)
+start: 1970-01-01T00:00:00.0000000Z
+maxIntervalNum: 8589934591
+now: 1970-01-01T00:00:01.0737418Z
+alarms:
+"
+
+            return TimingWheel.display t
+        }
+
+(*
 let%expect_test "min alarm at [max_time]" =
   List.iter [ false; true ] ~f:(fun advance_to_max ->
     List.iter [ 1; 2 ] ~f:(fun ns ->
