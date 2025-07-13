@@ -7,7 +7,7 @@ module IntervalNum =
 
     let zero : IntervalNum = 0L
     let one : IntervalNum = 1L
-    let minValue : IntervalNum = 1L
+    let minValue : IntervalNum = System.Int64.MinValue
     let maxValue : IntervalNum = System.Int64.MaxValue
     let ofInt64 (i : int64) : IntervalNum = i
     let toInt64 (i : IntervalNum) : int64 = i
@@ -20,3 +20,5 @@ module IntervalNum =
     let succ (i : IntervalNum) : IntervalNum = i + 1L
     let pred (i : IntervalNum) : IntervalNum = i - 1L
     let rem (i : IntervalNum) (s : IntervalNumSpan) : IntervalNumSpan = failwith "TODO"
+
+    let min (a : IntervalNum) (b : IntervalNum) : IntervalNum = min (toInt64 a) (toInt64 b) |> ofInt64

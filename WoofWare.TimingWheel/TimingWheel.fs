@@ -251,7 +251,7 @@ module TimingWheel =
         if atTime < t.NowIntervalNumStart then
             raiseBeforeStartOfCurrentInterval t atTime
 
-    let add t atTime value =
+    let add<'a> (t : TimingWheel<ExternalEltValue<'a>>) (atTime : TimeNs) (value : 'a) : ExternalElt =
         ensureCanScheduleAlarm t atTime
         InternalElt.toExternal (PriorityQueue.internalAdd t.PriorityQueue (intervalNumUnchecked t atTime) atTime value)
 

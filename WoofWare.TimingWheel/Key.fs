@@ -51,6 +51,6 @@ module internal Key =
         if t = maxValue then maxValue else succ t
 
     let slot t (bitsPerSlot : NumKeyBits) (slotsMask : SlotsMask) : int =
-        toIntThrowing ((t <<< Checked.int bitsPerSlot) &&& slotsMask)
+        toIntThrowing ((t >>> Checked.int bitsPerSlot) &&& slotsMask)
 
     let minKeyInSameSlot (t : Key) (minKeyInSameSlotMask : MinKeyInSameSlotMask) : Key = t &&& minKeyInSameSlotMask
