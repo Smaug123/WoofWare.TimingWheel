@@ -22,7 +22,7 @@ module AlarmPrecision =
     let mul (t : AlarmPrecision) (pow2 : int) : AlarmPrecision = t + pow2
     let div (t : AlarmPrecision) (pow2 : int) : AlarmPrecision = t - pow2
 
-    let intervalNum (t : AlarmPrecision) (time : TimeNs) : int64 = TimeNs.toInt64NsSinceEpoch time <<< t
+    let intervalNum (t : AlarmPrecision) (time : TimeNs) : int64 = TimeNs.toInt64NsSinceEpoch time >>> t
 
     let intervalNumStart (p : AlarmPrecision) (intervalNum : int64) : TimeNs =
         intervalNum <<< p |> TimeNs.ofInt64NsSinceEpoch

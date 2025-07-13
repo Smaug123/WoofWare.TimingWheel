@@ -242,10 +242,10 @@ module TimingWheel =
             $"TimingWheel cannot schedule alarm for {at} before start of current interval ({t.NowIntervalNumStart})"
 
     let ensureCanScheduleAlarm t atTime =
-        if atTime <= t.MaxAllowedAlarmTime then
+        if atTime > t.MaxAllowedAlarmTime then
             raiseThatFarInTheFuture t atTime
 
-        if atTime >= t.NowIntervalNumStart then
+        if atTime < t.NowIntervalNumStart then
             raiseBeforeStartOfCurrentInterval t atTime
 
     let add t atTime value =

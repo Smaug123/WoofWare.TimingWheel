@@ -66,31 +66,14 @@ module TestTimingWheel =
                 )
         }
 
-        (*
-    ((level_bits (1))
-     (config ((alarm_precision 1ns) (level_bits (1))))
-     (max_allowed_alarm_time "1970-01-01 00:00:00.000000001Z"))
-    ((level_bits (1))
-     (config ((alarm_precision 1.024us) (level_bits (1))))
-     (max_allowed_alarm_time "1970-01-01 00:00:00.000002047Z"))
-    ((level_bits (1))
-     (config ((alarm_precision 1.048576ms) (level_bits (1))))
-     (max_allowed_alarm_time "1970-01-01 00:00:00.002097151Z"))
-    ((level_bits (1))
-     (config ((alarm_precision 1.073741824s) (level_bits (1))))
-     (max_allowed_alarm_time "1970-01-01 00:00:02.147483647Z"))
-    ((level_bits (1))
-     (config ((alarm_precision 19h32m48.744177664s) (level_bits (1))))
-     (max_allowed_alarm_time "1970-01-02 15:05:37.488355327Z"))
-        *)
         expect {
             snapshotJson
                 @"[
   ""1970-01-01T00:00:00.0000000Z"",
-  ""2262-04-11T23:47:16.8547760Z"",
-  ""2262-04-11T23:47:16.8547760Z"",
-  ""2262-04-11T23:47:16.8547760Z"",
-  ""2262-04-11T23:47:16.8547760Z""
+  ""1970-01-01T00:00:00.0000020Z"",
+  ""1970-01-01T00:00:00.0020971Z"",
+  ""1970-01-01T00:00:02.1474836Z"",
+  ""1970-01-02T15:05:37.4883553Z""
 ]"
 
             return
@@ -102,31 +85,14 @@ module TestTimingWheel =
                 )
         }
 
-        (*
-    ((level_bits (10))
-     (config ((alarm_precision 1ns) (level_bits (10))))
-     (max_allowed_alarm_time "1970-01-01 00:00:00.000001023Z"))
-    ((level_bits (10))
-     (config ((alarm_precision 1.024us) (level_bits (10))))
-     (max_allowed_alarm_time "1970-01-01 00:00:00.001048575Z"))
-    ((level_bits (10))
-     (config ((alarm_precision 1.048576ms) (level_bits (10))))
-     (max_allowed_alarm_time "1970-01-01 00:00:01.073741823Z"))
-    ((level_bits (10))
-     (config ((alarm_precision 1.073741824s) (level_bits (10))))
-     (max_allowed_alarm_time "1970-01-01 00:18:19.511627775Z"))
-    ((level_bits (10))
-     (config ((alarm_precision 19h32m48.744177664s) (level_bits (10))))
-     (max_allowed_alarm_time "1972-04-13 23:59:54.037927935Z"))
-        *)
         expect {
             snapshotJson
                 @"[
   ""1970-01-01T00:00:00.0000010Z"",
-  ""2262-04-11T23:47:16.8547760Z"",
-  ""2262-04-11T23:47:16.8547760Z"",
-  ""2262-04-11T23:47:16.8547760Z"",
-  ""2262-04-11T23:47:16.8547760Z""
+  ""1970-01-01T00:00:00.0010485Z"",
+  ""1970-01-01T00:00:01.0737418Z"",
+  ""1970-01-01T00:18:19.5116277Z"",
+  ""1972-04-13T23:59:54.0379279Z""
 ]"
 
             return
@@ -230,6 +196,11 @@ module TestTimingWheel =
             return message
         }
 
+    let printResult (r : Result<'a, 'b>) : string =
+        match r with
+        | Ok r -> $"(Ok {r})"
+        | Error e -> $"(Error {e})"
+
     [<Test>]
     let ``isEmpty, intervalNum, length, mem`` () =
         let t = createUnit None (Some [ 1 ]) None None
@@ -252,86 +223,108 @@ module TestTimingWheel =
                 with e ->
                     Error e.Message
 
-            $"length: {TimingWheel.length t}\nisEmpty: {TimingWheel.isEmpty t}\nintervalNum1: {intervalNum1}\nintervalNum2: {intervalNum2}\nmem1: {TimingWheel.mem t a1}\nmem2: {TimingWheel.mem t a2}"
+            $"length: {TimingWheel.length t}\nisEmpty: {TimingWheel.isEmpty t}\nintervalNum1: {printResult intervalNum1}\nintervalNum2: {printResult intervalNum2}\nmem1: {TimingWheel.mem t a1}\nmem2: {TimingWheel.mem t a2}"
 
-        expect' {
-            snapshot ""
+        expect {
+            snapshot
+                @"length: 2
+isEmpty: False
+intervalNum1: (Ok 0)
+intervalNum2: (Ok 0)
+mem1: True
+mem2: True"
+
             return show ()
         }
+
+        TimingWheel.remove t a1
+
+        expect {
+            snapshot
+                @"length: 1
+isEmpty: False
+intervalNum1: (Error TimingWheel got invalid alarm)
+intervalNum2: (Ok 0)
+mem1: False
+mem2: True"
+
+            return show ()
+        }
+
+        TimingWheel.rescheduleAtIntervalNum t a2 (IntervalNum.ofInt 1)
+
+        expect {
+            snapshot
+                @"length: 1
+isEmpty: False
+intervalNum1: (Error TimingWheel got invalid alarm)
+intervalNum2: (Ok 1)
+mem1: False
+mem2: True"
+
+            return show ()
+        }
+
+        expect {
+            snapshotThrows @"System.Exception: Timing_wheel cannot reschedule alarm not in timing wheel"
+            return! fun () -> TimingWheel.rescheduleAtIntervalNum t a1 (IntervalNum.ofInt 1)
+        }
+
+        TimingWheel.remove t a2
+
+        expect {
+            snapshot
+                @"length: 0
+isEmpty: True
+intervalNum1: (Error TimingWheel got invalid alarm)
+intervalNum2: (Error TimingWheel got invalid alarm)
+mem1: False
+mem2: False"
+
+            return show ()
+        }
+
+    let advanceClockToIntervalNum
+        (t : TimingWheel<ExternalEltValue<'a>>)
+        (toNum : IntervalNum)
+        (handleFired : ExternalElt -> unit)
+        : unit
+        =
+        TimingWheel.advanceClock t (TimingWheel.intervalNumStart t toNum) handleFired
+
+    [<Test>]
+    let ``add failures`` () =
+        let t = createUnit None (Some [ 1 ]) None None
+
+        let add at =
+            ignore (TimingWheel.addAtIntervalNum t at)
+
+        for intervalNum = IntervalNum.toIntThrowing (TimingWheel.minAllowedAlarmIntervalNum t) to IntervalNum
+            .toIntThrowing (TimingWheel.maxAllowedAlarmIntervalNum t) do
+            add (IntervalNum.ofInt intervalNum)
+
+        let checkAddsFail () =
+            [
+                IntervalNum.minValue
+                IntervalNum.pred (TimingWheel.minAllowedAlarmIntervalNum t)
+                IntervalNum.succ (TimingWheel.maxAllowedAlarmIntervalNum t)
+                IntervalNum.maxValue
+            ]
+            |> List.iter (fun at ->
+                expect {
+                    snapshotThrows ""
+                    return! fun () -> add at
+                }
+            )
+
+        checkAddsFail ()
+        advanceClockToIntervalNum t IntervalNum.one ignore
+        checkAddsFail ()
+        advanceClockToIntervalNum t (TimingWheel.maxAllowedAlarmIntervalNum t) ignore
+        checkAddsFail ()
+        advanceClockToIntervalNum t TimeNs.maxValueRepresentable ignore
+        checkAddsFail ()
 (*
-let%expect_test "[is_empty], [interval_num], [length], [mem]" =
-  let t = create_unit () ~level_bits:[ 1 ] in
-  require (is_empty t);
-  require (length t = 0);
-  let a1 = add_at_interval_num t ~at:Interval_num.zero () in
-  let a2 = add_at_interval_num t ~at:Interval_num.zero () in
-  let show () =
-    print_s
-      [%message
-        ""
-          ~length:(length t : int)
-          ~is_empty:(is_empty t : bool)
-          ~interval_num1:
-            (Or_error.try_with (fun () -> Alarm.interval_num t a1)
-             : Interval_num.t Or_error.t)
-          ~interval_num2:
-            (Or_error.try_with (fun () -> Alarm.interval_num t a2)
-             : Interval_num.t Or_error.t)
-          ~mem1:(mem t a1 : bool)
-          ~mem2:(mem t a2 : bool)]
-  in
-  show ();
-  [%expect
-    {|
-    ((length   2)
-     (is_empty false)
-     (interval_num1 (Ok 0))
-     (interval_num2 (Ok 0))
-     (mem1 true)
-     (mem2 true))
-    |}];
-  remove t a1;
-  show ();
-  [%expect
-    {|
-    ((length   1)
-     (is_empty false)
-     (interval_num1 (Error "Timing_wheel got invalid alarm"))
-     (interval_num2 (Ok    0))
-     (mem1 false)
-     (mem2 true))
-    |}];
-  reschedule_at_interval_num t a2 ~at:(Interval_num.of_int 1);
-  show ();
-  [%expect
-    {|
-    ((length   1)
-     (is_empty false)
-     (interval_num1 (Error "Timing_wheel got invalid alarm"))
-     (interval_num2 (Ok    1))
-     (mem1 false)
-     (mem2 true))
-    |}];
-  require_does_raise (fun () ->
-    reschedule_at_interval_num t a1 ~at:(Interval_num.of_int 1));
-  [%expect {| (Failure "Timing_wheel cannot reschedule alarm not in timing wheel") |}];
-  remove t a2;
-  show ();
-  [%expect
-    {|
-    ((length   0)
-     (is_empty true)
-     (interval_num1 (Error "Timing_wheel got invalid alarm"))
-     (interval_num2 (Error "Timing_wheel got invalid alarm"))
-     (mem1 false)
-     (mem2 false))
-    |}]
-;;
-
-let advance_clock_to_interval_num t ~to_ ~handle_fired =
-  advance_clock t ~to_:(interval_num_start t to_) ~handle_fired
-;;
-
 let%expect_test "[add] failures" =
   let t = create_unit () ~level_bits:[ 1 ] in
   let add ~at = ignore (add_at_interval_num t ~at () : _ Alarm.t) in

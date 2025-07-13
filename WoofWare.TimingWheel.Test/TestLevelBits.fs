@@ -44,7 +44,7 @@ module TestLevelBits =
         }
 
         expect {
-            snapshotThrows @"System.ArgumentException: too many bits: 64, more than 64 (Parameter 'ints')"
+            snapshotThrows @"System.ArgumentException: too many bits: 64, more than 63 (Parameter 'ints')"
             return! (fun () -> LevelBits.createThrowing [ LevelBits.maxNumBits + 1 ])
         }
 

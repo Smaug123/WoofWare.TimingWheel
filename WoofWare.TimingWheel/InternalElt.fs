@@ -10,9 +10,10 @@ type internal Header =
 
 type internal Pool<'a> =
     {
-        Headers : Header[]
-        Elements : 'a[]
+        mutable Headers : Header[]
+        mutable Elements : 'a[]
         mutable FirstFreeHeader : int voption
+        mutable Capacity : int
         mutable Length : int
         Dummy : 'a option
         CopyTo : int -> 'a[] -> 'a -> unit
@@ -38,6 +39,7 @@ module internal Pool =
             Headers = headers
             FirstFreeHeader = ValueSome 0
             Length = 0
+            Capacity = capacity
             Dummy = dummy
             CopyTo = copyTo
         }
@@ -50,8 +52,66 @@ module internal Pool =
             | Header.Used -> true
             | _ -> false
 
+    let private growCapacity (capacity : int option) (oldCapacity : int) : int =
+        match capacity with
+        | None -> if oldCapacity = 0 then 1 else oldCapacity * 2
+        | Some capacity ->
+            if capacity <= oldCapacity then
+                failwith
+                    $"growCapacity too small: new capacity {capacity} should be greater than old capacity {oldCapacity}"
+
+            capacity
+
+    let private unsafeAddToFreeList (p : Pool<'a>) (ptr : int) : unit =
+        let nextFree =
+            match p.FirstFreeHeader with
+            | ValueNone -> Header.Null
+            | ValueSome p -> Header.Free p
+
+        p.Headers.[ptr] <- nextFree
+        p.FirstFreeHeader <- ValueSome ptr
+
     let isFull (p : Pool<'a>) : bool = p.FirstFreeHeader.IsNone
-    let grow (capacity : int) (p : Pool<'a>) : Pool<'a> = failwith "TODO"
+
+    let grow (capacity : int option) (p : Pool<'a>) : unit =
+        // TODO: can probably do better about computing this, I just made up this number from the runtime
+        // https://github.com/dotnet/runtime/blob/1d1bf92fcf43aa6981804dc53c5174445069c9e4/src/libraries/System.Private.CoreLib/src/System/Array.cs#L2258C13-L2258C23
+        let maxCapacity = 0X7FFFFFC7
+        let oldCapacity = p.Capacity
+        let capacity = min maxCapacity (growCapacity capacity oldCapacity)
+
+        if capacity = oldCapacity then
+            failwith "unable to grow pool which is already at maximum capacity"
+
+        let newArr =
+            match p.Dummy with
+            | None -> Array.zeroCreate capacity
+            | Some d -> Array.create capacity d
+
+        let newHeaders =
+            let r = Array.create capacity Header.Null
+            Array.blit p.Headers 0 r 0 p.Headers.Length
+            r
+
+        p.Headers <- newHeaders
+
+        Array.blit p.Elements 0 newArr 0 p.Length
+
+        p.Elements <- newArr
+        p.Capacity <- capacity
+        p.FirstFreeHeader <- ValueNone
+
+        for tupleNum = capacity - 1 downto oldCapacity do
+            unsafeAddToFreeList p tupleNum
+    (*
+        unsafe_init_range t' metadata ~lo:old_capacity ~hi:capacity;
+    for tuple_num = old_capacity - 1 downto 0 do
+      let header_index = tuple_num_to_header_index metadata tuple_num in
+      let header = unsafe_header t' ~header_index in
+      if not (Header.is_used header)
+      then unsafe_add_to_free_list t' metadata ~header_index
+    done;
+    *)
     (*
         let { Metadata.slots_per_tuple
         ; capacity = old_capacity
@@ -116,15 +176,6 @@ module internal Pool =
         p.Headers.[firstFree] <- Header.Used
 
         firstFree
-
-    let private unsafeAddToFreeList (p : Pool<'a>) (ptr : int) : unit =
-        let nextFree =
-            match p.FirstFreeHeader with
-            | ValueNone -> Header.Null
-            | ValueSome p -> Header.Free p
-
-        p.Headers.[ptr] <- nextFree
-        p.FirstFreeHeader <- ValueSome ptr
 
     let private unsafeFree (p : Pool<'a>) (ptr : int) =
         p.Length <- p.Length - 1

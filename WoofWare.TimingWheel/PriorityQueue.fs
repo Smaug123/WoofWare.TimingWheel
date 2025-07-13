@@ -307,11 +307,11 @@ module PriorityQueue =
         if key < minAllowedKey t || key > maxAllowedKey t then
             raiseGotInvalidKey t key
 
-    let internalAdd t key atTime value =
+    let internalAdd (t : PriorityQueue<ExternalEltValue<'a>>) (key : Key) (atTime : TimeNs) (value : 'a) : InternalElt =
         ensureValidKey t key
 
         if Pool.isFull t.Pool then
-            t.Pool <- Pool.grow 1 t.Pool
+            Pool.grow None t.Pool
 
         let elt = InternalElt.create t.Pool key atTime value -1
         internalAddElt t elt

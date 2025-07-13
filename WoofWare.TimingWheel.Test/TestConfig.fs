@@ -74,12 +74,14 @@ module TestConfig =
         }
 
     [<Test>]
-    let ``create with one second alarm precision`` () =
+    let ``create with one second alarm precision`` () : unit =
         expect {
             // TODO: this is wrong!
             snapshot @"01s.073741800 (1073741824 ns) : (11, 10, 10, 1)"
             return createConfig None None (gibiNanos 1.0) |> Config.display
         }
+
+        failwith "what's up there"
 
     [<Test>]
     let ``Config durations test`` () : unit =
