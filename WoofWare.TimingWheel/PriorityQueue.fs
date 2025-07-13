@@ -148,8 +148,7 @@ module PriorityQueue =
 
         if t.Length < 0 then
             failwith "unexpected negative length"
-        // TODO: check pool invariant too
-        // InternalElt.invariant t.Pool ignore
+
         if not (InternalElt.isNull t.MinElt) then
             if not (InternalElt.isValid t.Pool t.MinElt) then
                 failwith "got invalid MinElt"

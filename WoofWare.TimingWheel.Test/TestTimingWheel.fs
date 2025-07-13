@@ -1767,7 +1767,7 @@ alarms:
             return! fun () -> TimingWheel.add t badTime ()
         }
 
-        expect' {
+        expect {
             snapshotThrows @"System.Exception: addAtIntervalNum got invalid interval num 1024 (0 .. 1023)"
 
             return!

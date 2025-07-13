@@ -148,5 +148,3 @@ module TestConfig =
 
             return durations (Some true) [ 10 ; 10 ; 10 ] |> List.map Span.display
         }
-
-        failwith "TODO: we have an extra entry there for some reason"

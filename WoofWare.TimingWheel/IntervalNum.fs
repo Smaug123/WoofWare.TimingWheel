@@ -19,6 +19,5 @@ module IntervalNum =
     let diff (i : IntervalNum) (j : IntervalNum) : IntervalNumSpan = i - j
     let succ (i : IntervalNum) : IntervalNum = i + 1L
     let pred (i : IntervalNum) : IntervalNum = i - 1L
-    let rem (i : IntervalNum) (s : IntervalNumSpan) : IntervalNumSpan = failwith "TODO"
 
     let min (a : IntervalNum) (b : IntervalNum) : IntervalNum = min (toInt64 a) (toInt64 b) |> ofInt64
