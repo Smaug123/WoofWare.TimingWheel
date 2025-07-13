@@ -62,7 +62,7 @@ module TestTimingWheel =
                 |> List.map (fun alarmPrecision ->
                     let config = Config.create None LevelBits.default' alarmPrecision
                     let wheel = TimingWheel.create<int> config TimeNs.epoch
-                    TimeNs.format wheel.MaxAllowedAlarmTime
+                    TimeNs.format (TimingWheel.maxAllowedAlarmTime wheel)
                 )
         }
 
@@ -81,7 +81,7 @@ module TestTimingWheel =
                 |> List.map (fun alarmPrecision ->
                     let config = Config.create None (LevelBits.createThrowing [ 1 ]) alarmPrecision
                     let wheel = TimingWheel.create<int> config TimeNs.epoch
-                    TimeNs.format wheel.MaxAllowedAlarmTime
+                    TimeNs.format (TimingWheel.maxAllowedAlarmTime wheel)
                 )
         }
 
@@ -100,7 +100,7 @@ module TestTimingWheel =
                 |> List.map (fun alarmPrecision ->
                     let config = Config.create None (LevelBits.createThrowing [ 10 ]) alarmPrecision
                     let wheel = TimingWheel.create<int> config TimeNs.epoch
-                    TimeNs.format wheel.MaxAllowedAlarmTime
+                    TimeNs.format (TimingWheel.maxAllowedAlarmTime wheel)
                 )
         }
 
@@ -112,7 +112,7 @@ module TestTimingWheel =
             let alarmPrecision = gibiNanos s
             let config = createConfig (Some true) (Some [ 1 ]) alarmPrecision
             let wheel = TimingWheel.create<int> config TimeNs.epoch
-            let maxAllowedAlarmTime = wheel.MaxAllowedAlarmTime
+            let maxAllowedAlarmTime = TimingWheel.maxAllowedAlarmTime wheel
 
             messages.Add
                 $"{AlarmPrecision.display config.AlarmPrecision}, {LevelBits.numBits config.LevelBits}, {TimeNs.format maxAllowedAlarmTime}"
@@ -319,6 +319,9 @@ mem2: False"
             add (IntervalNum.ofInt intervalNum)
 
         let checkAddsFail () =
+            let messages = ResizeArray ()
+            messages.Clear ()
+
             [
                 IntervalNum.minValue
                 IntervalNum.pred (TimingWheel.minAllowedAlarmIntervalNum t)
@@ -326,117 +329,57 @@ mem2: False"
                 IntervalNum.maxValue
             ]
             |> List.iter (fun at ->
-                expect {
-                    snapshotThrows ""
-                    return! fun () -> add at
-                }
+                let exn = Assert.Throws<exn> (fun () -> add at)
+                messages.Add exn.Message
             )
 
-        checkAddsFail ()
-        advanceClockToIntervalNum t IntervalNum.one ignore
-        checkAddsFail ()
-        advanceClockToIntervalNum t (TimingWheel.maxAllowedAlarmIntervalNum t) ignore
-        checkAddsFail ()
-        advanceClockToIntervalNum t TimeNs.maxValueRepresentable ignore
-        checkAddsFail ()
+            messages |> String.concat "\n"
 
-    (*
-let%expect_test "[add] failures" =
-  let t = create_unit () ~level_bits:[ 1 ] in
-  let add ~at = ignore (add_at_interval_num t ~at () : _ Alarm.t) in
-  for
-    interval_num = Interval_num.to_int_exn (min_allowed_alarm_interval_num t)
-    to Interval_num.to_int_exn (max_allowed_alarm_interval_num t)
-  do
-    add ~at:(Interval_num.of_int interval_num)
-  done;
-  let check_adds_fail () =
-    List.iter
-      [ Interval_num.min_value
-      ; Interval_num.pred (min_allowed_alarm_interval_num t)
-      ; Interval_num.succ (max_allowed_alarm_interval_num t)
-      ; Interval_num.max_value
-      ]
-      ~f:(fun at -> require_does_raise (fun () -> add ~at))
-  in
-  check_adds_fail ();
-  [%expect
-    {|
-    ("Timing_wheel.interval_num_start got too small interval_num"
-     (interval_num     -4_611_686_018_427_387_904)
-     (min_interval_num 0))
-    ("Timing_wheel.interval_num_start got too small interval_num"
-     (interval_num     -1)
-     (min_interval_num 0))
-    ("Timing_wheel.add_at_interval_num got invalid interval num"
-     (interval_num                   2)
-     (min_allowed_alarm_interval_num 0)
-     (max_allowed_alarm_interval_num 1))
-    ("Timing_wheel.interval_num_start got too large interval_num"
-     (interval_num       4_611_686_018_427_387_903)
-     (t.max_interval_num 4_294_967_295))
-    |}];
-  advance_clock_to_interval_num t ~to_:Interval_num.one ~handle_fired:ignore;
-  check_adds_fail ();
-  [%expect
-    {|
-    ("Timing_wheel.interval_num_start got too small interval_num"
-     (interval_num     -4_611_686_018_427_387_904)
-     (min_interval_num 0))
-    ("Timing_wheel.add_at_interval_num got invalid interval num"
-     (interval_num                   0)
-     (min_allowed_alarm_interval_num 1)
-     (max_allowed_alarm_interval_num 2))
-    ("Timing_wheel.add_at_interval_num got invalid interval num"
-     (interval_num                   3)
-     (min_allowed_alarm_interval_num 1)
-     (max_allowed_alarm_interval_num 2))
-    ("Timing_wheel.interval_num_start got too large interval_num"
-     (interval_num       4_611_686_018_427_387_903)
-     (t.max_interval_num 4_294_967_295))
-    |}];
-  advance_clock_to_interval_num
-    t
-    ~to_:(max_allowed_alarm_interval_num t)
-    ~handle_fired:ignore;
-  check_adds_fail ();
-  [%expect
-    {|
-    ("Timing_wheel.interval_num_start got too small interval_num"
-     (interval_num     -4_611_686_018_427_387_904)
-     (min_interval_num 0))
-    ("Timing_wheel.add_at_interval_num got invalid interval num"
-     (interval_num                   1)
-     (min_allowed_alarm_interval_num 2)
-     (max_allowed_alarm_interval_num 3))
-    ("Timing_wheel.add_at_interval_num got invalid interval num"
-     (interval_num                   4)
-     (min_allowed_alarm_interval_num 2)
-     (max_allowed_alarm_interval_num 3))
-    ("Timing_wheel.interval_num_start got too large interval_num"
-     (interval_num       4_611_686_018_427_387_903)
-     (t.max_interval_num 4_294_967_295))
-    |}];
-  advance_clock t ~to_:Private.max_time ~handle_fired:ignore;
-  check_adds_fail ();
-  [%expect
-    {|
-    ("Timing_wheel.interval_num_start got too small interval_num"
-     (interval_num     -4_611_686_018_427_387_904)
-     (min_interval_num 0))
-    ("Timing_wheel.add_at_interval_num got invalid interval num"
-     (interval_num                   4_294_967_294)
-     (min_allowed_alarm_interval_num 4_294_967_295)
-     (max_allowed_alarm_interval_num 4_294_967_296))
-    ("Timing_wheel.interval_num_start got too large interval_num"
-     (interval_num       4_294_967_296)
-     (t.max_interval_num 4_294_967_295))
-    ("Timing_wheel.interval_num_start got too large interval_num"
-     (interval_num       4_611_686_018_427_387_903)
-     (t.max_interval_num 4_294_967_295))
-    |}]
-;;
- *)
+        expect {
+            snapshot
+                @"intervalNumStart got too small intervalNum: -9223372036854775808, min was 0
+intervalNumStart got too small intervalNum: -1, min was 0
+addAtIntervalNum got invalid interval num 2 (0 .. 1)
+intervalNumStart got too large intervalNum: 9223372036854775807, max was 8589934591"
+
+            return checkAddsFail ()
+        }
+
+        advanceClockToIntervalNum t IntervalNum.one ignore
+
+        expect {
+            snapshot
+                @"intervalNumStart got too small intervalNum: -9223372036854775808, min was 0
+addAtIntervalNum got invalid interval num 0 (1 .. 2)
+addAtIntervalNum got invalid interval num 3 (1 .. 2)
+intervalNumStart got too large intervalNum: 9223372036854775807, max was 8589934591"
+
+            return checkAddsFail ()
+        }
+
+        advanceClockToIntervalNum t (TimingWheel.maxAllowedAlarmIntervalNum t) ignore
+
+        expect {
+            snapshot
+                @"intervalNumStart got too small intervalNum: -9223372036854775808, min was 0
+addAtIntervalNum got invalid interval num 1 (2 .. 3)
+addAtIntervalNum got invalid interval num 4 (2 .. 3)
+intervalNumStart got too large intervalNum: 9223372036854775807, max was 8589934591"
+
+            return checkAddsFail ()
+        }
+
+        TimingWheel.advanceClock t TimeNs.maxValueRepresentable ignore
+
+        expect {
+            snapshot
+                @"intervalNumStart got too small intervalNum: -9223372036854775808, min was 0
+addAtIntervalNum got invalid interval num 8589934590 (8589934591 .. 8589934592)
+intervalNumStart got too large intervalNum: 8589934592, max was 8589934591
+intervalNumStart got too large intervalNum: 9223372036854775807, max was 8589934591"
+
+            return checkAddsFail ()
+        }
 
     [<Test>]
     let ``test clear`` () =
@@ -761,7 +704,7 @@ alarms:
         let t = createUnit None None None None
         TimingWheel.mem t TimingWheel.Alarm.null' |> shouldEqual false
 
-        let start = t.Start
+        let start = TimingWheel.start t
 
         let test after =
             let time = TimeNs.add start (gibiNanos after)
@@ -850,7 +793,7 @@ alarms:
             return TimingWheel.display t
         }
 
-        let toTime = TimeNs.add t.Now (gibiNanos 1.0)
+        let toTime = TimeNs.add (TimingWheel.now t) (gibiNanos 1.0)
         TimingWheel.advanceClock t toTime ignore
 
         expect {

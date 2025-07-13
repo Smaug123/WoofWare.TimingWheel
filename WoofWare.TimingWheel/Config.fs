@@ -1,11 +1,12 @@
 namespace WoofWare.TimingWheel
 
 type Config =
-    {
-        AlarmPrecision : AlarmPrecision
-        LevelBits : LevelBits
-        Capacity : int option
-    }
+    internal
+        {
+            AlarmPrecision : AlarmPrecision
+            LevelBits : LevelBits
+            Capacity : int option
+        }
 
 [<RequireQualifiedAccess>]
 module Config =

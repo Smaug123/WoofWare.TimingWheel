@@ -1,7 +1,213 @@
-WoofWare.BalancedReducer.BalancedReducer inherit obj
-WoofWare.BalancedReducer.BalancedReducer.compute [static method]: 'a WoofWare.BalancedReducer.BalancedReducer -> 'a
-WoofWare.BalancedReducer.BalancedReducer.create [static method]: int -> ('a -> 'a -> 'a) -> 'a WoofWare.BalancedReducer.BalancedReducer
-WoofWare.BalancedReducer.BalancedReducer.get [static method]: 'a WoofWare.BalancedReducer.BalancedReducer -> int -> 'a
-WoofWare.BalancedReducer.BalancedReducer.invariant [static method]: 'a WoofWare.BalancedReducer.BalancedReducer -> unit
-WoofWare.BalancedReducer.BalancedReducer.set [static method]: 'a WoofWare.BalancedReducer.BalancedReducer -> int -> 'a -> unit
-WoofWare.BalancedReducer.BalancedReducer`1 inherit obj
+WoofWare.TimingWheel.AlarmPrecisionModule inherit obj
+WoofWare.TimingWheel.AlarmPrecisionModule.aboutOneDay [static property]: [read-only] int
+WoofWare.TimingWheel.AlarmPrecisionModule.aboutOneMicrosecond [static property]: [read-only] int
+WoofWare.TimingWheel.AlarmPrecisionModule.aboutOneMillisecond [static property]: [read-only] int
+WoofWare.TimingWheel.AlarmPrecisionModule.aboutOneSecond [static property]: [read-only] int
+WoofWare.TimingWheel.AlarmPrecisionModule.div [static method]: int -> int -> int
+WoofWare.TimingWheel.AlarmPrecisionModule.get_aboutOneDay [static method]: unit -> int
+WoofWare.TimingWheel.AlarmPrecisionModule.get_aboutOneMicrosecond [static method]: unit -> int
+WoofWare.TimingWheel.AlarmPrecisionModule.get_aboutOneMillisecond [static method]: unit -> int
+WoofWare.TimingWheel.AlarmPrecisionModule.get_aboutOneSecond [static method]: unit -> int
+WoofWare.TimingWheel.AlarmPrecisionModule.get_oneNanosecond [static method]: unit -> int
+WoofWare.TimingWheel.AlarmPrecisionModule.intervalNum [static method]: int -> System.Int64 -> System.Int64
+WoofWare.TimingWheel.AlarmPrecisionModule.intervalNumStart [static method]: int -> System.Int64 -> System.Int64
+WoofWare.TimingWheel.AlarmPrecisionModule.mul [static method]: int -> int -> int
+WoofWare.TimingWheel.AlarmPrecisionModule.ofSpanFloorPow2Ns [static method]: System.Int64 -> int
+WoofWare.TimingWheel.AlarmPrecisionModule.oneNanosecond [static property]: [read-only] int
+WoofWare.TimingWheel.AlarmPrecisionModule.toSpan [static method]: int -> System.Int64
+WoofWare.TimingWheel.Config inherit obj, implements WoofWare.TimingWheel.Config System.IEquatable, System.Collections.IStructuralEquatable, WoofWare.TimingWheel.Config System.IComparable, System.IComparable, System.Collections.IStructuralComparable
+WoofWare.TimingWheel.Config.Equals [method]: (WoofWare.TimingWheel.Config, System.Collections.IEqualityComparer) -> bool
+WoofWare.TimingWheel.ConfigModule inherit obj
+WoofWare.TimingWheel.ConfigModule.alarmPrecision [static method]: WoofWare.TimingWheel.Config -> System.Int64
+WoofWare.TimingWheel.ConfigModule.create [static method]: int option -> int list -> int -> WoofWare.TimingWheel.Config
+WoofWare.TimingWheel.ConfigModule.durations [static method]: WoofWare.TimingWheel.Config -> System.Int64 list
+WoofWare.TimingWheel.ConfigModule.get_levelBitsDefault [static method]: unit -> int list
+WoofWare.TimingWheel.ConfigModule.invariant [static method]: WoofWare.TimingWheel.Config -> unit
+WoofWare.TimingWheel.ConfigModule.levelBitsDefault [static property]: [read-only] int list
+WoofWare.TimingWheel.ConfigModule.maxNumLevelBits [static method]: int -> int
+WoofWare.TimingWheel.ConfigModule.microsecondPrecision [static method]: unit -> WoofWare.TimingWheel.Config
+WoofWare.TimingWheel.ExternalEltValue`1 inherit obj, implements 'a WoofWare.TimingWheel.ExternalEltValue System.IEquatable, System.Collections.IStructuralEquatable, 'a WoofWare.TimingWheel.ExternalEltValue System.IComparable, System.IComparable, System.Collections.IStructuralComparable
+WoofWare.TimingWheel.ExternalEltValue`1..ctor [constructor]: (System.Int64, System.Int64, 'a, int, int Microsoft.FSharp.Core.FSharpValueOption, int Microsoft.FSharp.Core.FSharpValueOption)
+WoofWare.TimingWheel.ExternalEltValue`1.AtTime [property]: System.Int64
+WoofWare.TimingWheel.ExternalEltValue`1.AtTime@ [field]: System.Int64
+WoofWare.TimingWheel.ExternalEltValue`1.Equals [method]: ('a WoofWare.TimingWheel.ExternalEltValue, System.Collections.IEqualityComparer) -> bool
+WoofWare.TimingWheel.ExternalEltValue`1.get_AtTime [method]: unit -> System.Int64
+WoofWare.TimingWheel.ExternalEltValue`1.get_Key [method]: unit -> System.Int64
+WoofWare.TimingWheel.ExternalEltValue`1.get_LevelIndex [method]: unit -> int
+WoofWare.TimingWheel.ExternalEltValue`1.get_Next [method]: unit -> int Microsoft.FSharp.Core.FSharpValueOption
+WoofWare.TimingWheel.ExternalEltValue`1.get_Prev [method]: unit -> int Microsoft.FSharp.Core.FSharpValueOption
+WoofWare.TimingWheel.ExternalEltValue`1.get_Value [method]: unit -> 'a
+WoofWare.TimingWheel.ExternalEltValue`1.Key [property]: System.Int64
+WoofWare.TimingWheel.ExternalEltValue`1.Key@ [field]: System.Int64
+WoofWare.TimingWheel.ExternalEltValue`1.LevelIndex [property]: int
+WoofWare.TimingWheel.ExternalEltValue`1.LevelIndex@ [field]: int
+WoofWare.TimingWheel.ExternalEltValue`1.Next [property]: int Microsoft.FSharp.Core.FSharpValueOption
+WoofWare.TimingWheel.ExternalEltValue`1.Next@ [field]: int Microsoft.FSharp.Core.FSharpValueOption
+WoofWare.TimingWheel.ExternalEltValue`1.Prev [property]: int Microsoft.FSharp.Core.FSharpValueOption
+WoofWare.TimingWheel.ExternalEltValue`1.Prev@ [field]: int Microsoft.FSharp.Core.FSharpValueOption
+WoofWare.TimingWheel.ExternalEltValue`1.set_AtTime [method]: System.Int64 -> unit
+WoofWare.TimingWheel.ExternalEltValue`1.set_Key [method]: System.Int64 -> unit
+WoofWare.TimingWheel.ExternalEltValue`1.set_LevelIndex [method]: int -> unit
+WoofWare.TimingWheel.ExternalEltValue`1.set_Next [method]: int Microsoft.FSharp.Core.FSharpValueOption -> unit
+WoofWare.TimingWheel.ExternalEltValue`1.set_Prev [method]: int Microsoft.FSharp.Core.FSharpValueOption -> unit
+WoofWare.TimingWheel.ExternalEltValue`1.set_Value [method]: 'a -> unit
+WoofWare.TimingWheel.ExternalEltValue`1.Value [property]: 'a
+WoofWare.TimingWheel.ExternalEltValue`1.Value@ [field]: 'a
+WoofWare.TimingWheel.IntervalNumModule inherit obj
+WoofWare.TimingWheel.IntervalNumModule.add [static method]: System.Int64 -> System.Int64 -> System.Int64
+WoofWare.TimingWheel.IntervalNumModule.diff [static method]: System.Int64 -> System.Int64 -> System.Int64
+WoofWare.TimingWheel.IntervalNumModule.get_maxValue [static method]: unit -> System.Int64
+WoofWare.TimingWheel.IntervalNumModule.get_minValue [static method]: unit -> System.Int64
+WoofWare.TimingWheel.IntervalNumModule.get_one [static method]: unit -> System.Int64
+WoofWare.TimingWheel.IntervalNumModule.get_zero [static method]: unit -> System.Int64
+WoofWare.TimingWheel.IntervalNumModule.maxValue [static property]: [read-only] System.Int64
+WoofWare.TimingWheel.IntervalNumModule.min [static method]: System.Int64 -> System.Int64 -> System.Int64
+WoofWare.TimingWheel.IntervalNumModule.minValue [static property]: [read-only] System.Int64
+WoofWare.TimingWheel.IntervalNumModule.ofInt [static method]: int -> System.Int64
+WoofWare.TimingWheel.IntervalNumModule.ofInt64 [static method]: System.Int64 -> System.Int64
+WoofWare.TimingWheel.IntervalNumModule.one [static property]: [read-only] System.Int64
+WoofWare.TimingWheel.IntervalNumModule.pred [static method]: System.Int64 -> System.Int64
+WoofWare.TimingWheel.IntervalNumModule.sub [static method]: System.Int64 -> System.Int64 -> System.Int64
+WoofWare.TimingWheel.IntervalNumModule.succ [static method]: System.Int64 -> System.Int64
+WoofWare.TimingWheel.IntervalNumModule.toInt64 [static method]: System.Int64 -> System.Int64
+WoofWare.TimingWheel.IntervalNumModule.toIntThrowing [static method]: System.Int64 -> int
+WoofWare.TimingWheel.IntervalNumModule.zero [static property]: [read-only] System.Int64
+WoofWare.TimingWheel.Level inherit obj, implements WoofWare.TimingWheel.Level System.IEquatable, System.Collections.IStructuralEquatable, WoofWare.TimingWheel.Level System.IComparable, System.IComparable, System.Collections.IStructuralComparable
+WoofWare.TimingWheel.Level..ctor [constructor]: (int, int, System.Int64, int, System.Int64, System.Int64, System.Int64, int, System.Int64, System.Int64, int Microsoft.FSharp.Core.FSharpValueOption [])
+WoofWare.TimingWheel.Level.Bits [property]: [read-only] int
+WoofWare.TimingWheel.Level.BitsPerSlot [property]: [read-only] int
+WoofWare.TimingWheel.Level.DiffMaxMinAllowedKey [property]: [read-only] System.Int64
+WoofWare.TimingWheel.Level.Equals [method]: (WoofWare.TimingWheel.Level, System.Collections.IEqualityComparer) -> bool
+WoofWare.TimingWheel.Level.get_Bits [method]: unit -> int
+WoofWare.TimingWheel.Level.get_BitsPerSlot [method]: unit -> int
+WoofWare.TimingWheel.Level.get_DiffMaxMinAllowedKey [method]: unit -> System.Int64
+WoofWare.TimingWheel.Level.get_Index [method]: unit -> int
+WoofWare.TimingWheel.Level.get_KeysPerSlot [method]: unit -> System.Int64
+WoofWare.TimingWheel.Level.get_Length [method]: unit -> int
+WoofWare.TimingWheel.Level.get_MaxAllowedKey [method]: unit -> System.Int64
+WoofWare.TimingWheel.Level.get_MinAllowedKey [method]: unit -> System.Int64
+WoofWare.TimingWheel.Level.get_MinKeyInSameSlotMask [method]: unit -> System.Int64
+WoofWare.TimingWheel.Level.get_Slots [method]: unit -> int Microsoft.FSharp.Core.FSharpValueOption []
+WoofWare.TimingWheel.Level.get_SlotsMask [method]: unit -> System.Int64
+WoofWare.TimingWheel.Level.Index [property]: [read-only] int
+WoofWare.TimingWheel.Level.KeysPerSlot [property]: [read-only] System.Int64
+WoofWare.TimingWheel.Level.Length [property]: int
+WoofWare.TimingWheel.Level.Length@ [field]: int
+WoofWare.TimingWheel.Level.MaxAllowedKey [property]: System.Int64
+WoofWare.TimingWheel.Level.MaxAllowedKey@ [field]: System.Int64
+WoofWare.TimingWheel.Level.MinAllowedKey [property]: System.Int64
+WoofWare.TimingWheel.Level.MinAllowedKey@ [field]: System.Int64
+WoofWare.TimingWheel.Level.MinKeyInSameSlotMask [property]: [read-only] System.Int64
+WoofWare.TimingWheel.Level.set_Length [method]: int -> unit
+WoofWare.TimingWheel.Level.set_MaxAllowedKey [method]: System.Int64 -> unit
+WoofWare.TimingWheel.Level.set_MinAllowedKey [method]: System.Int64 -> unit
+WoofWare.TimingWheel.Level.Slots [property]: [read-only] int Microsoft.FSharp.Core.FSharpValueOption []
+WoofWare.TimingWheel.Level.SlotsMask [property]: [read-only] System.Int64
+WoofWare.TimingWheel.LevelBitsModule inherit obj
+WoofWare.TimingWheel.LevelBitsModule.createThrowing [static method]: int list -> int list
+WoofWare.TimingWheel.LevelBitsModule.createThrowing' [static method]: bool -> int list -> int list
+WoofWare.TimingWheel.LevelBitsModule.default' [static property]: [read-only] int list
+WoofWare.TimingWheel.LevelBitsModule.get_default' [static method]: unit -> int list
+WoofWare.TimingWheel.LevelBitsModule.get_maxNumBits [static method]: unit -> int
+WoofWare.TimingWheel.LevelBitsModule.maxNumBits [static property]: [read-only] int
+WoofWare.TimingWheel.LevelBitsModule.numBits [static method]: int list -> int
+WoofWare.TimingWheel.LevelBitsModule.numBitsInternal [static method]: int list -> int
+WoofWare.TimingWheel.LevelModule inherit obj
+WoofWare.TimingWheel.LevelModule.computeMinAllowedKey [static method]: WoofWare.TimingWheel.Level -> System.Int64 -> System.Int64
+WoofWare.TimingWheel.LevelModule.minKeyInSameSlot [static method]: WoofWare.TimingWheel.Level -> System.Int64 -> System.Int64
+WoofWare.TimingWheel.LevelModule.nextSlot [static method]: WoofWare.TimingWheel.Level -> int -> int
+WoofWare.TimingWheel.LevelModule.slot [static method]: WoofWare.TimingWheel.Level -> System.Int64 -> int
+WoofWare.TimingWheel.TimeNsModule inherit obj
+WoofWare.TimingWheel.TimeNsModule+SpanModule inherit obj
+WoofWare.TimingWheel.TimeNsModule+SpanModule.day [static field]: System.Int64 = 86400000000000
+WoofWare.TimingWheel.TimeNsModule+SpanModule.get_zero [static method]: unit -> System.Int64
+WoofWare.TimingWheel.TimeNsModule+SpanModule.hour [static field]: System.Int64 = 3600000000000
+WoofWare.TimingWheel.TimeNsModule+SpanModule.maxValueFor1usRounding [static field]: System.Int64 = 1574640000000000000
+WoofWare.TimingWheel.TimeNsModule+SpanModule.maxValueRepresentable [static field]: System.Int64 = 9223372036854775807
+WoofWare.TimingWheel.TimeNsModule+SpanModule.microsecond [static field]: System.Int64 = 1000
+WoofWare.TimingWheel.TimeNsModule+SpanModule.millisecond [static field]: System.Int64 = 1000000
+WoofWare.TimingWheel.TimeNsModule+SpanModule.minute [static field]: System.Int64 = 60000000000
+WoofWare.TimingWheel.TimeNsModule+SpanModule.minValueFor1usRounding [static field]: System.Int64 = -1574640000000000000
+WoofWare.TimingWheel.TimeNsModule+SpanModule.nanosecond [static field]: System.Int64 = 1
+WoofWare.TimingWheel.TimeNsModule+SpanModule.ofInt64Ns [static method]: System.Int64 -> System.Int64
+WoofWare.TimingWheel.TimeNsModule+SpanModule.ofSec [static method]: float -> System.Int64
+WoofWare.TimingWheel.TimeNsModule+SpanModule.scale [static method]: System.Int64 -> float -> System.Int64
+WoofWare.TimingWheel.TimeNsModule+SpanModule.scaleInt [static method]: System.Int64 -> int -> System.Int64
+WoofWare.TimingWheel.TimeNsModule+SpanModule.scaleInt64 [static method]: System.Int64 -> System.Int64 -> System.Int64
+WoofWare.TimingWheel.TimeNsModule+SpanModule.second [static field]: System.Int64 = 1000000000
+WoofWare.TimingWheel.TimeNsModule+SpanModule.toInt64Ns [static method]: System.Int64 -> System.Int64
+WoofWare.TimingWheel.TimeNsModule+SpanModule.zero [static property]: [read-only] System.Int64
+WoofWare.TimingWheel.TimeNsModule.add [static method]: System.Int64 -> System.Int64 -> System.Int64
+WoofWare.TimingWheel.TimeNsModule.epoch [static property]: [read-only] System.Int64
+WoofWare.TimingWheel.TimeNsModule.get_epoch [static method]: unit -> System.Int64
+WoofWare.TimingWheel.TimeNsModule.get_maxValueRepresentable [static method]: unit -> System.Int64
+WoofWare.TimingWheel.TimeNsModule.maxValueFor1usRounding [static field]: System.Int64 = 1574640000000000000
+WoofWare.TimingWheel.TimeNsModule.maxValueRepresentable [static property]: [read-only] System.Int64
+WoofWare.TimingWheel.TimeNsModule.minValueFor1usRounding [static field]: System.Int64 = -1574640000000000000
+WoofWare.TimingWheel.TimeNsModule.ofInt64NsSinceEpoch [static method]: System.Int64 -> System.Int64
+WoofWare.TimingWheel.TimeNsModule.ofSpanSinceEpoch [static method]: System.Int64 -> System.Int64
+WoofWare.TimingWheel.TimeNsModule.toInt64NsSinceEpoch [static method]: System.Int64 -> System.Int64
+WoofWare.TimingWheel.TimeNsModule.toSpanSinceEpoch [static method]: System.Int64 -> System.Int64
+WoofWare.TimingWheel.TimingWheel inherit obj
+WoofWare.TimingWheel.TimingWheel+AlarmModule inherit obj
+WoofWare.TimingWheel.TimingWheel+AlarmModule.atTime [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> int Microsoft.FSharp.Core.FSharpValueOption -> System.Int64
+WoofWare.TimingWheel.TimingWheel+AlarmModule.get_null' [static method]: unit -> int Microsoft.FSharp.Core.FSharpValueOption
+WoofWare.TimingWheel.TimingWheel+AlarmModule.intervalNum [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> int Microsoft.FSharp.Core.FSharpValueOption -> System.Int64
+WoofWare.TimingWheel.TimingWheel+AlarmModule.null' [static property]: [read-only] int Microsoft.FSharp.Core.FSharpValueOption
+WoofWare.TimingWheel.TimingWheel+AlarmModule.value [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> int Microsoft.FSharp.Core.FSharpValueOption -> 'a
+WoofWare.TimingWheel.TimingWheel.add [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> System.Int64 -> 'a -> int Microsoft.FSharp.Core.FSharpValueOption
+WoofWare.TimingWheel.TimingWheel.addAtIntervalNum [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> System.Int64 -> 'a -> int Microsoft.FSharp.Core.FSharpValueOption
+WoofWare.TimingWheel.TimingWheel.advanceClock [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> System.Int64 -> (int Microsoft.FSharp.Core.FSharpValueOption -> unit) -> unit
+WoofWare.TimingWheel.TimingWheel.advanceClockStopAtNextAlarm [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> System.Int64 -> (int Microsoft.FSharp.Core.FSharpValueOption -> unit) -> unit
+WoofWare.TimingWheel.TimingWheel.alarmPrecision [static method]: 'a WoofWare.TimingWheel.TimingWheel -> System.Int64
+WoofWare.TimingWheel.TimingWheel.clear [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> unit
+WoofWare.TimingWheel.TimingWheel.computeMaxAllowedAlarmTime [static method]: 'a WoofWare.TimingWheel.TimingWheel -> System.Int64
+WoofWare.TimingWheel.TimingWheel.create [static method]: WoofWare.TimingWheel.Config -> System.Int64 -> 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel
+WoofWare.TimingWheel.TimingWheel.ensureCanScheduleAlarm [static method]: 'a WoofWare.TimingWheel.TimingWheel -> System.Int64 -> unit
+WoofWare.TimingWheel.TimingWheel.firePastAlarms [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> (int Microsoft.FSharp.Core.FSharpValueOption -> unit) -> unit
+WoofWare.TimingWheel.TimingWheel.get_maxTime [static method]: unit -> System.Int64
+WoofWare.TimingWheel.TimingWheel.get_minIntervalNum [static method]: unit -> System.Int64
+WoofWare.TimingWheel.TimingWheel.get_minTime [static method]: unit -> System.Int64
+WoofWare.TimingWheel.TimingWheel.intervalNum [static method]: 'a WoofWare.TimingWheel.TimingWheel -> System.Int64 -> System.Int64
+WoofWare.TimingWheel.TimingWheel.intervalNumInternal [static method]: System.Int64 -> int -> System.Int64
+WoofWare.TimingWheel.TimingWheel.intervalNumStart [static method]: 'a WoofWare.TimingWheel.TimingWheel -> System.Int64 -> System.Int64
+WoofWare.TimingWheel.TimingWheel.intervalNumStartUnchecked [static method]: 'a WoofWare.TimingWheel.TimingWheel -> System.Int64 -> System.Int64
+WoofWare.TimingWheel.TimingWheel.intervalNumUnchecked [static method]: 'a WoofWare.TimingWheel.TimingWheel -> System.Int64 -> System.Int64
+WoofWare.TimingWheel.TimingWheel.intervalStart [static method]: 'a WoofWare.TimingWheel.TimingWheel -> System.Int64 -> System.Int64
+WoofWare.TimingWheel.TimingWheel.invariant [static method]: ('a -> unit) -> 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> unit
+WoofWare.TimingWheel.TimingWheel.isEmpty [static method]: 'a WoofWare.TimingWheel.TimingWheel -> bool
+WoofWare.TimingWheel.TimingWheel.iter [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> (int Microsoft.FSharp.Core.FSharpValueOption -> unit) -> unit
+WoofWare.TimingWheel.TimingWheel.length [static method]: 'a WoofWare.TimingWheel.TimingWheel -> int
+WoofWare.TimingWheel.TimingWheel.maxAlarmTimeInList [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> int Microsoft.FSharp.Core.FSharpValueOption -> System.Int64
+WoofWare.TimingWheel.TimingWheel.maxAlarmTimeInMinInterval [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> System.Int64 option
+WoofWare.TimingWheel.TimingWheel.maxAlarmTimeInMinIntervalThrowing [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> System.Int64
+WoofWare.TimingWheel.TimingWheel.maxAllowedAlarmIntervalNum [static method]: 'a WoofWare.TimingWheel.TimingWheel -> System.Int64
+WoofWare.TimingWheel.TimingWheel.maxAllowedAlarmTime [static method]: 'a WoofWare.TimingWheel.TimingWheel -> System.Int64
+WoofWare.TimingWheel.TimingWheel.maxIntervalNum [static method]: 'a WoofWare.TimingWheel.TimingWheel -> System.Int64
+WoofWare.TimingWheel.TimingWheel.maxTime [static property]: [read-only] System.Int64
+WoofWare.TimingWheel.TimingWheel.mem [static method]: 'a WoofWare.TimingWheel.TimingWheel -> int Microsoft.FSharp.Core.FSharpValueOption -> bool
+WoofWare.TimingWheel.TimingWheel.minAlarmIntervalNum [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> System.Int64 option
+WoofWare.TimingWheel.TimingWheel.minAlarmIntervalNumThrowing [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> System.Int64
+WoofWare.TimingWheel.TimingWheel.minAlarmTimeInList [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> int Microsoft.FSharp.Core.FSharpValueOption -> System.Int64
+WoofWare.TimingWheel.TimingWheel.minAlarmTimeInMinInterval [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> System.Int64 option
+WoofWare.TimingWheel.TimingWheel.minAlarmTimeInMinIntervalThrowing [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> System.Int64
+WoofWare.TimingWheel.TimingWheel.minAllowedAlarmIntervalNum [static method]: unit -> ('a WoofWare.TimingWheel.TimingWheel -> System.Int64)
+WoofWare.TimingWheel.TimingWheel.minIntervalNum [static property]: [read-only] System.Int64
+WoofWare.TimingWheel.TimingWheel.minTime [static property]: [read-only] System.Int64
+WoofWare.TimingWheel.TimingWheel.nextAlarmFiresAt [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> System.Int64 option
+WoofWare.TimingWheel.TimingWheel.nextAlarmFiresAtInternal [static method]: 'a WoofWare.TimingWheel.TimingWheel -> System.Int64 -> System.Int64
+WoofWare.TimingWheel.TimingWheel.nextAlarmFiresAtThrowing [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> System.Int64
+WoofWare.TimingWheel.TimingWheel.now [static method]: 'a WoofWare.TimingWheel.TimingWheel -> System.Int64
+WoofWare.TimingWheel.TimingWheel.nowIntervalNum [static method]: 'a WoofWare.TimingWheel.TimingWheel -> System.Int64
+WoofWare.TimingWheel.TimingWheel.raiseBeforeStartOfCurrentInterval [static method]: 'a WoofWare.TimingWheel.TimingWheel -> System.Int64 -> unit
+WoofWare.TimingWheel.TimingWheel.raiseIntervalNumStartGotTooLarge [static method]: 'a WoofWare.TimingWheel.TimingWheel -> System.Int64 -> unit
+WoofWare.TimingWheel.TimingWheel.raiseIntervalNumStartGotTooSmall [static method]: System.Int64 -> unit
+WoofWare.TimingWheel.TimingWheel.raiseNextAlarmFiresAtThrowingOfEmptyTimingWheel [static method]: unit -> 'a
+WoofWare.TimingWheel.TimingWheel.raiseNextAlarmFiresAtWithAllAlarmsInMaxInterval [static method]: unit -> 'a
+WoofWare.TimingWheel.TimingWheel.raiseThatFarInTheFuture [static method]: 'a WoofWare.TimingWheel.TimingWheel -> System.Int64 -> unit
+WoofWare.TimingWheel.TimingWheel.remove [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> int Microsoft.FSharp.Core.FSharpValueOption -> unit
+WoofWare.TimingWheel.TimingWheel.reschedule [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> int Microsoft.FSharp.Core.FSharpValueOption -> System.Int64 -> unit
+WoofWare.TimingWheel.TimingWheel.rescheduleAtIntervalNum [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> int Microsoft.FSharp.Core.FSharpValueOption -> System.Int64 -> unit
+WoofWare.TimingWheel.TimingWheel.rescheduleGen [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> int Microsoft.FSharp.Core.FSharpValueOption -> System.Int64 -> System.Int64 -> unit
+WoofWare.TimingWheel.TimingWheel.start [static method]: 'a WoofWare.TimingWheel.TimingWheel -> System.Int64
+WoofWare.TimingWheel.TimingWheel`1 inherit obj

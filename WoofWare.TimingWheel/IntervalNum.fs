@@ -1,7 +1,9 @@
 namespace WoofWare.TimingWheel
 
+/// An index of one of the intervals into which a timing-wheel partitions time.
 type IntervalNum = int64
 
+/// An index of one of the intervals into which a timing-wheel partitions time.
 [<RequireQualifiedAccess>]
 module IntervalNum =
 

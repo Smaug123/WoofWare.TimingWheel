@@ -6,6 +6,8 @@
 
 This is the timing wheel from [janestreet/core_kernel](https://github.com/janestreet/core_kernel/tree/774a6821b14cbcdcde02cbbca1984ea32bf06184/timing_wheel).
 
+# Description
+
 To quote the original documentation:
 
 > A timing wheel is a specialized priority queue for a set of time-based alarms.
@@ -88,6 +90,22 @@ of `maxAllowedAlarmTime t - now t` using the default `levelBits`.
   +-------------+-----------------+----------|
   |        2^61 | nanosecond      | 73 years |
 ```
+
+# Status
+
+This was my first pass at porting the library.
+
+I have ported all its tests, but I have *not* used the library in prod, so I have very little guarantee that the
+semantics of WoofWare.TimingWheel are even remotely similar to those of `timing_wheel`.
+I draw your attention specifically to these words from the MIT licence:
+
+> WITHOUT WARRANTY OF ANY KIND... INCLUDING... FITNESS FOR A PARTICULAR PURPOSE
+
+# To-do list
+
+* Tighten the API surface so that specifically only the useful methods are exposed.
+* Perhaps pull out the `tuple_pool` implementation which I have inlined; OCaml is operating under very different constraints to F# for that.
+* Document the API surface.
 
 # Licence
 

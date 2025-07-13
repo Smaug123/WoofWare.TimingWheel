@@ -7,9 +7,9 @@ open WoofWare.TimingWheel
 module TimingWheel =
     let display (t : TimingWheel<ExternalEltValue<'a>>) =
         let config = Config.display t.Config
-        let start = TimeNs.format t.Start
-        let maxIntervalNum = string<int64> t.MaxIntervalNum
-        let now = TimeNs.format t.Now
+        let start = TimeNs.format (TimingWheel.start t)
+        let maxIntervalNum = string<int64> (TimingWheel.maxIntervalNum t)
+        let now = TimeNs.format (TimingWheel.now t)
 
         let alarms =
             let result = StringBuilder ()

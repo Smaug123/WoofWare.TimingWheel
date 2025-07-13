@@ -1,9 +1,9 @@
 namespace WoofWare.TimingWheel
 
-type IntervalNumSpan = int64
+type internal IntervalNumSpan = int64
 
 [<RequireQualifiedAccess>]
-module IntervalNumSpan =
+module internal IntervalNumSpan =
     let ofInt64 (i : int64) : IntervalNumSpan = i
     let toInt64 (i : IntervalNumSpan) : int64 = i
 

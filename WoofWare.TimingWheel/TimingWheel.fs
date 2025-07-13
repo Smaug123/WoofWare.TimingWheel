@@ -1,20 +1,36 @@
 namespace WoofWare.TimingWheel
 
 type TimingWheel<'a> =
-    {
-        Config : Config
-        Start : TimeNs
-        MaxIntervalNum : IntervalNum
-        mutable Now : TimeNs
-        mutable NowIntervalNumStart : TimeNs
-        mutable MaxAllowedAlarmTime : TimeNs
-        PriorityQueue : PriorityQueue<'a>
-    }
+    internal
+        {
+            Config : Config
+            Start : TimeNs
+            MaxIntervalNum : IntervalNum
+            mutable Now : TimeNs
+            mutable NowIntervalNumStart : TimeNs
+            mutable MaxAllowedAlarmTime : TimeNs
+            PriorityQueue : PriorityQueue<'a>
+        }
 
 [<RequireQualifiedAccess>]
 module TimingWheel =
 
+    let internal config (t : TimingWheel<'a>) : Config = t.Config
+
     let alarmPrecision (t : TimingWheel<'a>) : TimeNs.Span = Config.alarmPrecision t.Config
+
+    /// The earliest time that ever existed for this TimingWheel.
+    let start (t : TimingWheel<'a>) : TimeNs = t.Start
+
+    /// The current time, according to this TimingWheel. For example, you can't register alarms for before this time,
+    /// because that's in the past.
+    let now (t : TimingWheel<'a>) : TimeNs = t.Now
+
+    let maxIntervalNum (t : TimingWheel<'a>) : IntervalNum = t.MaxIntervalNum
+
+    /// The latest time you can set an alarm for. (We don't have enough precision to register alarms arbitrarily far
+    /// in the future, for example.)
+    let maxAllowedAlarmTime (t : TimingWheel<'a>) : TimeNs = t.MaxAllowedAlarmTime
 
     type Alarm = Elt
 

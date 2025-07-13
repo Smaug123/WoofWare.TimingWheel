@@ -1,14 +1,20 @@
 namespace WoofWare.TimingWheel
 
-type NumKeyBits = int
+type internal NumKeyBits = int
 
 [<RequireQualifiedAccess>]
-module NumKeyBits =
+module internal NumKeyBits =
 
+    [<Literal>]
     let minValue : NumKeyBits = 0
+
+    [<Literal>]
     let maxValue : NumKeyBits = 64 - 1
 
+    [<Literal>]
     let zero : NumKeyBits = 0
+
+    [<Literal>]
     let one : NumKeyBits = 1
 
     let ofInt (i : int) : NumKeyBits = i

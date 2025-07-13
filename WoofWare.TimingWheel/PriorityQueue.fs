@@ -1,6 +1,6 @@
 namespace WoofWare.TimingWheel
 
-type PriorityQueue<'a> =
+type internal PriorityQueue<'a> =
     private
         {
             mutable Length : int
@@ -10,9 +10,10 @@ type PriorityQueue<'a> =
             Levels : Level[]
         }
 
-type Elt = ExternalElt
+type internal Elt = ExternalElt
 
-module Elt =
+[<RequireQualifiedAccess>]
+module internal Elt =
     let null' = ExternalElt.None
 
     let at (p : PriorityQueue<ExternalEltValue<'a>>) (t : ExternalElt) : TimeNs =
@@ -25,7 +26,7 @@ module Elt =
         InternalElt.value p.Pool (InternalElt.ofExternalThrowing p.Pool t)
 
 [<RequireQualifiedAccess>]
-module PriorityQueue =
+module internal PriorityQueue =
     let isEmpty (t : PriorityQueue<'a>) : bool = t.Length = 0
     let numLevels (t : PriorityQueue<'a>) : int = Array.length t.Levels
     let minAllowedKey (t : PriorityQueue<'a>) : Key = t.Levels.[0].MinAllowedKey

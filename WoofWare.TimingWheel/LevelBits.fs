@@ -1,7 +1,29 @@
 namespace WoofWare.TimingWheel
 
+/// The timing-wheel implementation uses an array of "levels", where level [i] is an
+/// array of length [2^b_i], where the [b_i] are the "level bits" specified via
+/// [LevelBits.createThrowing [b_0, b_1; ...]].
+///
+/// A timing wheel can handle approximately [2 ** LevelBits.numBits t] intervals/keys beyond
+/// the current minimum time/key, where [LevelBits.numBits t = b_0 + b_1 + ...].
+///
+/// One can use a [LevelBits] to trade off run time and space usage of a timing
+/// wheel. For a fixed [numBits], as the number of levels increases, the length of
+/// the levels decreases and the timing wheel uses less space, but the constant factor
+/// for the running time of [add] and [increaseMinAllowedKey] increases.
 type LevelBits = NumKeyBits list
 
+/// The timing-wheel implementation uses an array of "levels", where level [i] is an
+/// array of length [2^b_i], where the [b_i] are the "level bits" specified via
+/// [LevelBits.createThrowing [b_0, b_1; ...]].
+///
+/// A timing wheel can handle approximately [2 ** LevelBits.numBits t] intervals/keys beyond
+/// the current minimum time/key, where [LevelBits.numBits t = b_0 + b_1 + ...].
+///
+/// One can use a [LevelBits] to trade off run time and space usage of a timing
+/// wheel. For a fixed [numBits], as the number of levels increases, the length of
+/// the levels decreases and the timing wheel uses less space, but the constant factor
+/// for the running time of [add] and [increaseMinAllowedKey] increases.
 [<RequireQualifiedAccess>]
 module LevelBits =
     let maxNumBits = int NumKeyBits.maxValue
@@ -9,7 +31,7 @@ module LevelBits =
 
     let numBits (t : LevelBits) : int = int (numBitsInternal t)
 
-    let invariant (t : LevelBits) : unit =
+    let internal invariant (t : LevelBits) : unit =
         if t.IsEmpty then
             failwith "LevelBits expected to be nonempty"
 
@@ -46,7 +68,7 @@ module LevelBits =
 
     let default' : LevelBits = createThrowing [ 11 ; 10 ; 10 ; 10 ; 10 ; 10 ; 1 ]
 
-    let trim (t : LevelBits) (maxNumBits : NumKeyBits) : LevelBits =
+    let internal trim (t : LevelBits) (maxNumBits : NumKeyBits) : LevelBits =
         if numBitsInternal t <= maxNumBits then
             t
         else
