@@ -39,7 +39,7 @@ module TestConfig =
     /// giga-nanoseecond
     let gibi = pown 2.0 30
 
-    let gibiNanos float =
+    let gibiNanos (float : float) : TimeNs.Span =
         float * gibi |> System.Math.Round |> int64<float> |> TimeNs.Span.ofInt64Ns
 
     let createConfig

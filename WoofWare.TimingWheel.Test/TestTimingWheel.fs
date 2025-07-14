@@ -134,7 +134,7 @@ module TestTimingWheel =
         (extendToMaxNumBits : bool option)
         (levelBits : int list option)
         (start : TimeNs option)
-        (alarmPrecision : TimeNs option)
+        (alarmPrecision : TimeNs.Span option)
         : TimingWheel<ExternalEltValue<'a>>
         =
         let start = start |> Option.defaultValue TimeNs.epoch
@@ -147,7 +147,7 @@ module TestTimingWheel =
         (extendToMaxNumBits : bool option)
         (levelBits : int list option)
         (start : TimeNs option)
-        (alarmPrecision : TimeNs option)
+        (alarmPrecision : TimeNs.Span option)
         =
         create<unit> extendToMaxNumBits levelBits start alarmPrecision
 
@@ -837,7 +837,7 @@ alarms:
             for i = 10 downto 0 do
                 TimingWheel.add
                     t
-                    (TimingWheel.maxTime - TimeNs.Span.ofInt64Ns (int64<int> i))
+                    (TimeNs.sub TimingWheel.maxTime (TimeNs.Span.ofInt64Ns (int64<int> i)))
                     (fun () -> messages.Add $"(alarm (i %i{i}))")
                 |> ignore<ExternalElt>
 
@@ -846,7 +846,7 @@ alarms:
 
                 TimingWheel.advanceClock
                     t
-                    (TimingWheel.maxTime - TimeNs.Span.ofInt64Ns (int64<int> i))
+                    (TimeNs.sub TimingWheel.maxTime (TimeNs.Span.ofInt64Ns (int64<int> i)))
                     (fun a -> TimingWheel.Alarm.value t a ())
 
         messages |> String.concat "\n"
@@ -1434,8 +1434,11 @@ alarms:
         let t = createUnit None (Some [ 10 ]) None None
 
         let nextAlarmFiresAfter () =
-            $"nextAlarmFiresAfter: {TimingWheel.nextAlarmFiresAt t
-                                    |> Option.map (fun t -> t - TimeNs.epoch |> Span.display)}"
+            let display =
+                TimingWheel.nextAlarmFiresAt t
+                |> Option.map (fun t -> TimeNs.diff t TimeNs.epoch |> Span.display)
+
+            $"nextAlarmFiresAfter: {display}"
 
         let addAt at =
             TimingWheel.add t (TimeNs.add TimeNs.epoch at) () |> ignore

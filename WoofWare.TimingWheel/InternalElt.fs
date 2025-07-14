@@ -317,7 +317,7 @@ module internal InternalElt =
         maxAlarmTime
 
     let minAlarmTime (pool : Pool<ExternalEltValue<'a>>) (head : InternalElt) (withKey : Key) : TimeNs =
-        let mutable minAlarmTime = TimeNs.MaxValue
+        let mutable minAlarmTime = TimeNs.maxValue
 
         iter
             pool

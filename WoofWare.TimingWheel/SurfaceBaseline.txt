@@ -117,11 +117,14 @@ WoofWare.TimingWheel.LevelModule.computeMinAllowedKey [static method]: WoofWare.
 WoofWare.TimingWheel.LevelModule.minKeyInSameSlot [static method]: WoofWare.TimingWheel.Level -> System.Int64 -> System.Int64
 WoofWare.TimingWheel.LevelModule.nextSlot [static method]: WoofWare.TimingWheel.Level -> int -> int
 WoofWare.TimingWheel.LevelModule.slot [static method]: WoofWare.TimingWheel.Level -> System.Int64 -> int
+WoofWare.TimingWheel.timeNs inherit obj
 WoofWare.TimingWheel.TimeNsModule inherit obj
+WoofWare.TimingWheel.TimeNsModule+span inherit obj
 WoofWare.TimingWheel.TimeNsModule+SpanModule inherit obj
 WoofWare.TimingWheel.TimeNsModule+SpanModule.day [static field]: System.Int64 = 86400000000000
 WoofWare.TimingWheel.TimeNsModule+SpanModule.get_zero [static method]: unit -> System.Int64
 WoofWare.TimingWheel.TimeNsModule+SpanModule.hour [static field]: System.Int64 = 3600000000000
+WoofWare.TimingWheel.TimeNsModule+SpanModule.isPositive [static method]: System.Int64 -> bool
 WoofWare.TimingWheel.TimeNsModule+SpanModule.maxValueFor1usRounding [static field]: System.Int64 = 1574640000000000000
 WoofWare.TimingWheel.TimeNsModule+SpanModule.maxValueRepresentable [static field]: System.Int64 = 9223372036854775807
 WoofWare.TimingWheel.TimeNsModule+SpanModule.microsecond [static field]: System.Int64 = 1000
@@ -138,14 +141,18 @@ WoofWare.TimingWheel.TimeNsModule+SpanModule.second [static field]: System.Int64
 WoofWare.TimingWheel.TimeNsModule+SpanModule.toInt64Ns [static method]: System.Int64 -> System.Int64
 WoofWare.TimingWheel.TimeNsModule+SpanModule.zero [static property]: [read-only] System.Int64
 WoofWare.TimingWheel.TimeNsModule.add [static method]: System.Int64 -> System.Int64 -> System.Int64
+WoofWare.TimingWheel.TimeNsModule.diff [static method]: System.Int64 -> System.Int64 -> System.Int64
 WoofWare.TimingWheel.TimeNsModule.epoch [static property]: [read-only] System.Int64
 WoofWare.TimingWheel.TimeNsModule.get_epoch [static method]: unit -> System.Int64
+WoofWare.TimingWheel.TimeNsModule.get_maxValue [static method]: unit -> System.Int64
 WoofWare.TimingWheel.TimeNsModule.get_maxValueRepresentable [static method]: unit -> System.Int64
+WoofWare.TimingWheel.TimeNsModule.maxValue [static property]: [read-only] System.Int64
 WoofWare.TimingWheel.TimeNsModule.maxValueFor1usRounding [static field]: System.Int64 = 1574640000000000000
 WoofWare.TimingWheel.TimeNsModule.maxValueRepresentable [static property]: [read-only] System.Int64
 WoofWare.TimingWheel.TimeNsModule.minValueFor1usRounding [static field]: System.Int64 = -1574640000000000000
 WoofWare.TimingWheel.TimeNsModule.ofInt64NsSinceEpoch [static method]: System.Int64 -> System.Int64
 WoofWare.TimingWheel.TimeNsModule.ofSpanSinceEpoch [static method]: System.Int64 -> System.Int64
+WoofWare.TimingWheel.TimeNsModule.sub [static method]: System.Int64 -> System.Int64 -> System.Int64
 WoofWare.TimingWheel.TimeNsModule.toInt64NsSinceEpoch [static method]: System.Int64 -> System.Int64
 WoofWare.TimingWheel.TimeNsModule.toSpanSinceEpoch [static method]: System.Int64 -> System.Int64
 WoofWare.TimingWheel.TimingWheel inherit obj
