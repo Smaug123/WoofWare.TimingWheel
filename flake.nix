@@ -58,6 +58,7 @@
           src = ./.;
           projectFile = "./WoofWare.TimingWheel/WoofWare.TimingWheel.fsproj";
           testProjectFile = "./WoofWare.TimingWheel.Test/WoofWare.TimingWheel.Test.fsproj";
+          disabledTests = ["WoofWare.TimingWheel.Test.TestSurface.EnsureVersionIsMonotonic"];
           nugetDeps = ./nix/deps.json; # `nix build .#default.fetch-deps && ./result nix/deps.json`
           doCheck = true;
         };

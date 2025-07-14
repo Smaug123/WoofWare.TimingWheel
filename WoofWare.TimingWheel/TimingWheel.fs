@@ -186,7 +186,7 @@ module TimingWheel =
                 if intervalStart t (Alarm.atTime t alarm) < intervalStart t t.Now then
                     failwith "future alarm started before now"
 
-                if Alarm.atTime t alarm <= t.Now - alarmPrecision t then
+                if Alarm.atTime t alarm <= TimeNs.sub t.Now (alarmPrecision t) then
                     failwith "alarm started in the past"
             )
 
