@@ -2,6 +2,7 @@ namespace WoofWare.TimingWheel
 
 // https://github.com/janestreet/core/blob/1a1290e5789200e2dd50a87a17774f4eb75e82c6/core/src/time_ns.ml#L34
 
+/// The tag indicating that a number represents an absolute instant in time since some epoch.
 [<Measure>]
 type timeNs
 
@@ -11,10 +12,11 @@ type TimeNs = int64<timeNs>
 /// An instant in time, expressed as nanoseconds since the epoch.
 [<RequireQualifiedAccess>]
 module TimeNs =
-    /// A length of time, expressed as an integer number of nanoseconds.
+    /// The tag indicating that a number represents a length of time.
     [<Measure>]
     type span
 
+    /// A length of time, expressed as an integer number of nanoseconds.
     type Span = int64<span>
 
     /// A length of time, expressed as an integer number of nanoseconds.
