@@ -1,9 +1,9 @@
 namespace WoofWare.TimingWheel
 
-/// The log2 of a number of nanoseconds, used to specifiy the precision of a TimingWheel.
+/// The log2 of a number of nanoseconds, used to specify the precision of a TimingWheel.
 type AlarmPrecision = int
 
-/// The log2 of a number of nanoseconds, used to specifiy the precision of a TimingWheel.
+/// The log2 of a number of nanoseconds, used to specify the precision of a TimingWheel.
 [<RequireQualifiedAccess>]
 module AlarmPrecision =
     let internal numKeyBits (t : AlarmPrecision) : NumKeyBits = NumKeyBits.ofInt t
