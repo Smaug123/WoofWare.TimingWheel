@@ -173,6 +173,7 @@ WoofWare.TimingWheel.TimingWheel.firePastAlarms [static method]: 'a WoofWare.Tim
 WoofWare.TimingWheel.TimingWheel.intervalNum [static method]: 'a WoofWare.TimingWheel.TimingWheel -> System.Int64 -> System.Int64
 WoofWare.TimingWheel.TimingWheel.intervalNumStart [static method]: 'a WoofWare.TimingWheel.TimingWheel -> System.Int64 -> System.Int64
 WoofWare.TimingWheel.TimingWheel.intervalStart [static method]: 'a WoofWare.TimingWheel.TimingWheel -> System.Int64 -> System.Int64
+WoofWare.TimingWheel.TimingWheel.invariant [static method]: ('a -> unit) -> 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> unit
 WoofWare.TimingWheel.TimingWheel.isEmpty [static method]: 'a WoofWare.TimingWheel.TimingWheel -> bool
 WoofWare.TimingWheel.TimingWheel.iter [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> (int Microsoft.FSharp.Core.FSharpValueOption -> unit) -> unit
 WoofWare.TimingWheel.TimingWheel.length [static method]: 'a WoofWare.TimingWheel.TimingWheel -> int

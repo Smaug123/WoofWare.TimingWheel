@@ -300,7 +300,11 @@ module TimingWheel =
     /// <exception cref="Exception">Throws if there are no alarms in the wheel.</exception>
     val nextAlarmFiresAtThrowing<'a> : 'a ExternalEltValue TimingWheel -> TimeNs
 
+    /// <summary>
+    /// For debug use: assert that the internal structure of this TimingWheel is consistent.
+    /// </summary>
+    val invariant<'a> : ('a -> unit) -> ExternalEltValue<'a> TimingWheel -> unit
+
     val internal maxTime : TimeNs
     val internal maxIntervalNum<'a> : TimingWheel<'a> -> IntervalNum
-    val internal invariant<'a> : ('a -> unit) -> ExternalEltValue<'a> TimingWheel -> unit
     val internal intervalNumInternal : TimeNs -> AlarmPrecision -> IntervalNum
