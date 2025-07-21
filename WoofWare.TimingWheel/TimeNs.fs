@@ -85,6 +85,29 @@ module TimeNs =
 
         let div (a : Span) (b : Span) : int64 = a / b
 
+        /// A somewhat imprecise ToString function; this rounds to the nearest time
+        /// representable in .NET before displaying.
+        let display (t : Span) : string =
+            let ts = System.TimeSpan.FromMilliseconds (float t / 1_000_000.0)
+            let seconds = $"%02d{ts.Seconds}s.%09.0f{(ts.TotalSeconds % 1.0) * 1_000_000_000.0}"
+
+            let minutes =
+                if ts.TotalMinutes >= 1.0 then
+                    $"%02d{ts.Minutes}m%s{seconds}"
+                else
+                    seconds
+
+            let hours =
+                if ts.TotalHours >= 1.0 then
+                    $"%02d{ts.Hours}h%s{minutes}"
+                else
+                    minutes
+
+            if ts.TotalDays >= 1.0 then
+                $"%02d{ts.Days}d%s{hours}"
+            else
+                hours
+
     [<Literal>]
     let maxValueFor1usRounding : TimeNs =
         Span.maxValueFor1usRounding * 1L<timeNs / span>
@@ -139,3 +162,10 @@ module TimeNs =
     let nextMultiple (canEqualAfter : bool option) (base_ : TimeNs) (after : TimeNs) (interval : Span) : TimeNs =
         let canEqualAfter = defaultArg canEqualAfter false
         nextMultipleInternal "nextMultiple" canEqualAfter base_ after interval
+
+    /// A slightly imprecise display of this instant, interpreting `epoch` as the Unix epoch.
+    /// This is imprecise because it's rounded to the nearest time representable in .NET before display.
+    let display (t : TimeNs) : string =
+        let ts = System.TimeSpan.FromMilliseconds (float<int64<_>> t / 1_000_000.0)
+        let dt = System.DateTime.UnixEpoch + ts
+        dt.ToString "O"

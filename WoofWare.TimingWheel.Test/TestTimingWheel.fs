@@ -50,7 +50,7 @@ module TestTimingWheel =
         expect {
             snapshotJson
                 @"[
-  ""2189-03-16T23:50:27.6410816Z"",
+  ""2189-03-16T23:50:27.6410824Z"",
   ""2262-04-11T23:47:16.8547760Z"",
   ""2262-04-11T23:47:16.8547760Z"",
   ""2262-04-11T23:47:16.8547760Z"",
@@ -62,7 +62,7 @@ module TestTimingWheel =
                 |> List.map (fun alarmPrecision ->
                     let config = TimingWheelConfig.create None LevelBits.default' alarmPrecision
                     let wheel = TimingWheel.create<int> config TimeNs.epoch
-                    TimeNs.format (TimingWheel.maxAllowedAlarmTime wheel)
+                    TimeNs.display (TimingWheel.maxAllowedAlarmTime wheel)
                 )
         }
 
@@ -83,7 +83,7 @@ module TestTimingWheel =
                         TimingWheelConfig.create None (LevelBits.createThrowing [ 1 ]) alarmPrecision
 
                     let wheel = TimingWheel.create<int> config TimeNs.epoch
-                    TimeNs.format (TimingWheel.maxAllowedAlarmTime wheel)
+                    TimeNs.display (TimingWheel.maxAllowedAlarmTime wheel)
                 )
         }
 
@@ -104,7 +104,7 @@ module TestTimingWheel =
                         TimingWheelConfig.create None (LevelBits.createThrowing [ 10 ]) alarmPrecision
 
                     let wheel = TimingWheel.create<int> config TimeNs.epoch
-                    TimeNs.format (TimingWheel.maxAllowedAlarmTime wheel)
+                    TimeNs.display (TimingWheel.maxAllowedAlarmTime wheel)
                 )
         }
 
@@ -119,7 +119,7 @@ module TestTimingWheel =
             let maxAllowedAlarmTime = TimingWheel.maxAllowedAlarmTime wheel
 
             messages.Add
-                $"{AlarmPrecision.display config.AlarmPrecision}, {LevelBits.numBits config.LevelBits}, {TimeNs.format maxAllowedAlarmTime}"
+                $"{AlarmPrecision.display config.AlarmPrecision}, {LevelBits.numBits config.LevelBits}, {TimeNs.display maxAllowedAlarmTime}"
 
         expect {
             snapshotJson
@@ -716,7 +716,7 @@ alarms:
             let intervalNumStart = TimingWheel.intervalNumStart t intervalNum
             let intervalStart = TimingWheel.intervalStart t time
 
-            $"intervalNum: %i{intervalNum}\nintervalNumStart: %s{TimeNs.format intervalNumStart}\nintervalStart:    %s{TimeNs.format intervalStart}"
+            $"intervalNum: %i{intervalNum}\nintervalNumStart: %s{TimeNs.display intervalNumStart}\nintervalStart:    %s{TimeNs.display intervalStart}"
 
         expect {
             snapshot
@@ -1164,7 +1164,7 @@ alarms:
                 else
                     None
 
-            $"((now {TimeNs.format t.Now})\n  (next_alarm_fires_at ({Option.map TimeNs.format (TimingWheel.nextAlarmFiresAt t)}))\n  (alarm1_at ({alarmAt alarm1 |> Option.map TimeNs.format}))\n  (alarm2_at ({alarmAt alarm2 |> Option.map TimeNs.format})))"
+            $"((now {TimeNs.display t.Now})\n  (next_alarm_fires_at ({Option.map TimeNs.display (TimingWheel.nextAlarmFiresAt t)}))\n  (alarm1_at ({alarmAt alarm1 |> Option.map TimeNs.display}))\n  (alarm2_at ({alarmAt alarm2 |> Option.map TimeNs.display})))"
             |> messages.Add
 
         show ()
@@ -1440,7 +1440,7 @@ alarms:
         let nextAlarmFiresAfter () =
             let display =
                 TimingWheel.nextAlarmFiresAt t
-                |> Option.map (fun t -> TimeNs.diff t TimeNs.epoch |> Span.display)
+                |> Option.map (fun t -> TimeNs.diff t TimeNs.epoch |> TimeNs.Span.display)
 
             $"nextAlarmFiresAfter: {display}"
 
@@ -1645,7 +1645,7 @@ alarms:
 
         expect {
             snapshot @"1970-01-01T00:00:00.5368709Z"
-            return TimingWheel.maxAlarmTimeInMinInterval t |> Option.get |> TimeNs.format
+            return TimingWheel.maxAlarmTimeInMinInterval t |> Option.get |> TimeNs.display
         }
 
         TimingWheel.remove t a
@@ -1659,7 +1659,7 @@ alarms:
 
         expect {
             snapshot @"1970-01-01T00:00:02.2548578Z"
-            return TimingWheel.maxAlarmTimeInMinInterval t |> Option.get |> TimeNs.format
+            return TimingWheel.maxAlarmTimeInMinInterval t |> Option.get |> TimeNs.display
         }
 
     [<Test>]
@@ -1675,7 +1675,7 @@ alarms:
 
         expect {
             snapshot @"1970-01-01T00:00:00.5368709Z"
-            return TimingWheel.maxAlarmTimeInMinInterval t |> Option.get |> TimeNs.format
+            return TimingWheel.maxAlarmTimeInMinInterval t |> Option.get |> TimeNs.display
         }
 
         TimingWheel.remove t a
@@ -1686,7 +1686,7 @@ alarms:
 
         expect {
             snapshot @"1970-01-01T00:00:02.2548578Z"
-            return TimingWheel.maxAlarmTimeInMinInterval t |> Option.get |> TimeNs.format
+            return TimingWheel.maxAlarmTimeInMinInterval t |> Option.get |> TimeNs.display
         }
 
     [<Test>]
