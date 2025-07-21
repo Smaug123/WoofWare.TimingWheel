@@ -6,7 +6,7 @@ open WoofWare.TimingWheel
 [<RequireQualifiedAccess>]
 module TimingWheel =
     let display (t : TimingWheel<ExternalEltValue<'a>>) =
-        let config = Config.display t.Config
+        let config = TimingWheelConfig.display t.Config
         let start = TimeNs.format (TimingWheel.start t)
         let maxIntervalNum = string<int64> (TimingWheel.maxIntervalNum t)
         let now = TimeNs.format (TimingWheel.now t)

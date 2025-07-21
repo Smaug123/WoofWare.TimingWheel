@@ -12,7 +12,7 @@
         <Compile Include="TimeNs.fs" />
         <Compile Include="AlarmPrecision.fs" />
         <Compile Include="LevelBits.fs" />
-        <Compile Include="Config.fs" />
+        <Compile Include="TimingWheelConfig.fs" />
         <Compile Include="TimingWheel.fs" />
         <Compile Include="TestTimeNs.fs" />
         <Compile Include="TestNumKeyBits.fs" />
