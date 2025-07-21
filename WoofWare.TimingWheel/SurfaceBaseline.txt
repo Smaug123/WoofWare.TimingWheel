@@ -122,6 +122,7 @@ WoofWare.TimingWheel.TimeNsModule inherit obj
 WoofWare.TimingWheel.TimeNsModule+span inherit obj
 WoofWare.TimingWheel.TimeNsModule+SpanModule inherit obj
 WoofWare.TimingWheel.TimeNsModule+SpanModule.day [static field]: System.Int64 = 86400000000000
+WoofWare.TimingWheel.TimeNsModule+SpanModule.div [static method]: System.Int64 -> System.Int64 -> System.Int64
 WoofWare.TimingWheel.TimeNsModule+SpanModule.get_zero [static method]: unit -> System.Int64
 WoofWare.TimingWheel.TimeNsModule+SpanModule.hour [static field]: System.Int64 = 3600000000000
 WoofWare.TimingWheel.TimeNsModule+SpanModule.isPositive [static method]: System.Int64 -> bool
@@ -150,6 +151,7 @@ WoofWare.TimingWheel.TimeNsModule.maxValue [static property]: [read-only] System
 WoofWare.TimingWheel.TimeNsModule.maxValueFor1usRounding [static field]: System.Int64 = 1574640000000000000
 WoofWare.TimingWheel.TimeNsModule.maxValueRepresentable [static property]: [read-only] System.Int64
 WoofWare.TimingWheel.TimeNsModule.minValueFor1usRounding [static field]: System.Int64 = -1574640000000000000
+WoofWare.TimingWheel.TimeNsModule.nextMultiple [static method]: bool option -> System.Int64 -> System.Int64 -> System.Int64 -> System.Int64
 WoofWare.TimingWheel.TimeNsModule.ofInt64NsSinceEpoch [static method]: System.Int64 -> System.Int64
 WoofWare.TimingWheel.TimeNsModule.ofSpanSinceEpoch [static method]: System.Int64 -> System.Int64
 WoofWare.TimingWheel.TimeNsModule.sub [static method]: System.Int64 -> System.Int64 -> System.Int64

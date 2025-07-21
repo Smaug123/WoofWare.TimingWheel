@@ -14,6 +14,7 @@
         <Compile Include="LevelBits.fs" />
         <Compile Include="Config.fs" />
         <Compile Include="TimingWheel.fs" />
+        <Compile Include="TestTimeNs.fs" />
         <Compile Include="TestNumKeyBits.fs" />
         <Compile Include="TestAlarmPrecision.fs" />
         <Compile Include="TestConfig.fs" />
