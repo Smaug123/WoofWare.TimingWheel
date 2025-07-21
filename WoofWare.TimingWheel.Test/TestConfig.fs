@@ -20,7 +20,7 @@ module TestConfig =
     let ``microsecondPrecision test`` () =
         expect {
             snapshot @"00s.000001000 (1024 ns) : (10, 10, 6, 6, 5)"
-            return Config.microsecondPrecision () |> Config.display
+            return TimingWheelConfig.microsecondPrecision () |> TimingWheelConfig.display
         }
 
         expect {
@@ -33,7 +33,9 @@ module TestConfig =
   ""01d15h05m37s.488355300""
 ]"
 
-            return Config.durations (Config.microsecondPrecision ()) |> List.map Span.display
+            return
+                TimingWheelConfig.durations (TimingWheelConfig.microsecondPrecision ())
+                |> List.map Span.display
         }
 
     /// giga-nanoseecond
@@ -46,7 +48,7 @@ module TestConfig =
         (extendToMaxNumBits : bool option)
         (levelBits : int list option)
         (alarmPrecision : TimeNs.Span)
-        : Config
+        : TimingWheelConfig
         =
         let levelBits =
             levelBits
@@ -57,7 +59,7 @@ module TestConfig =
             )
             |> Option.defaultValue LevelBits.default'
 
-        Config.create None levelBits (alarmPrecision |> AlarmPrecision.ofSpanFloorPow2Ns)
+        TimingWheelConfig.create None levelBits (alarmPrecision |> AlarmPrecision.ofSpanFloorPow2Ns)
 
     [<Test>]
     let ``create with negative alarm precision`` () =
@@ -77,13 +79,13 @@ module TestConfig =
     let ``create with one second alarm precision`` () : unit =
         expect {
             snapshot @"01s.073741800 (1073741824 ns) : (11, 10, 10, 2)"
-            return createConfig None None (gibiNanos 1.0) |> Config.display
+            return createConfig None None (gibiNanos 1.0) |> TimingWheelConfig.display
         }
 
     [<Test>]
     let ``Config durations test`` () : unit =
         let durations extendToMaxNumBits (levelBits : LevelBits) =
-            Config.durations (createConfig extendToMaxNumBits (Some levelBits) (gibiNanos 1.0))
+            TimingWheelConfig.durations (createConfig extendToMaxNumBits (Some levelBits) (gibiNanos 1.0))
 
         expect {
             snapshot @"[02s.147483600]"

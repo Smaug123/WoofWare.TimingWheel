@@ -3,7 +3,7 @@ namespace WoofWare.TimingWheel.Test
 open WoofWare.TimingWheel
 
 [<RequireQualifiedAccess>]
-module Config =
+module TimingWheelConfig =
 
-    let display (c : Config) : string =
+    let display (c : TimingWheelConfig) : string =
         $"%s{AlarmPrecision.display c.AlarmPrecision} : %s{LevelBits.display c.LevelBits}"

@@ -60,7 +60,7 @@ module TestTimingWheel =
             return
                 precisions
                 |> List.map (fun alarmPrecision ->
-                    let config = Config.create None LevelBits.default' alarmPrecision
+                    let config = TimingWheelConfig.create None LevelBits.default' alarmPrecision
                     let wheel = TimingWheel.create<int> config TimeNs.epoch
                     TimeNs.format (TimingWheel.maxAllowedAlarmTime wheel)
                 )
@@ -79,7 +79,9 @@ module TestTimingWheel =
             return
                 precisions
                 |> List.map (fun alarmPrecision ->
-                    let config = Config.create None (LevelBits.createThrowing [ 1 ]) alarmPrecision
+                    let config =
+                        TimingWheelConfig.create None (LevelBits.createThrowing [ 1 ]) alarmPrecision
+
                     let wheel = TimingWheel.create<int> config TimeNs.epoch
                     TimeNs.format (TimingWheel.maxAllowedAlarmTime wheel)
                 )
@@ -98,7 +100,9 @@ module TestTimingWheel =
             return
                 precisions
                 |> List.map (fun alarmPrecision ->
-                    let config = Config.create None (LevelBits.createThrowing [ 10 ]) alarmPrecision
+                    let config =
+                        TimingWheelConfig.create None (LevelBits.createThrowing [ 10 ]) alarmPrecision
+
                     let wheel = TimingWheel.create<int> config TimeNs.epoch
                     TimeNs.format (TimingWheel.maxAllowedAlarmTime wheel)
                 )
@@ -1110,7 +1114,7 @@ alarms:
     [<Test>]
     let ``access to a removed alarm doesn't segfault`` () =
         let config =
-            Config.create None LevelBits.default' (gibiNanos 1.0 |> AlarmPrecision.ofSpanFloorPow2Ns)
+            TimingWheelConfig.create None LevelBits.default' (gibiNanos 1.0 |> AlarmPrecision.ofSpanFloorPow2Ns)
 
         let t = TimingWheel.create config TimeNs.epoch
 
@@ -1145,7 +1149,7 @@ alarms:
             TimeNs.add TimeNs.epoch (gibiNanos nSeconds)
 
         let config =
-            Config.create None [ 10 ] (gibiNanos 1.0 |> AlarmPrecision.ofSpanFloorPow2Ns)
+            TimingWheelConfig.create None [ 10 ] (gibiNanos 1.0 |> AlarmPrecision.ofSpanFloorPow2Ns)
 
         let t = TimingWheel.create config (epochPlus 0.0)
 
@@ -1321,7 +1325,7 @@ Fire alarm 2.
     let ``advanceClock fires alarms at the right time`` () =
         let test add numAlarms alarmPrecision alarmSeparation advanceBy =
             let config =
-                Config.create None LevelBits.default' (AlarmPrecision.ofSpanFloorPow2Ns alarmPrecision)
+                TimingWheelConfig.create None LevelBits.default' (AlarmPrecision.ofSpanFloorPow2Ns alarmPrecision)
 
             let t = TimingWheel.create config TimeNs.epoch
 
@@ -1353,7 +1357,7 @@ Fire alarm 2.
     [<Test>]
     let ``add and advanceClock`` () =
         let config =
-            Config.create None [ 10 ] (AlarmPrecision.ofSpanFloorPow2Ns (gibiNanos 1.0))
+            TimingWheelConfig.create None [ 10 ] (AlarmPrecision.ofSpanFloorPow2Ns (gibiNanos 1.0))
 
         let t = TimingWheel.create config TimeNs.epoch
 
@@ -1539,7 +1543,10 @@ alarms:
                     loop (i - 1) (at2 :: ats)
                 else
                     let config =
-                        Config.create None LevelBits.default' (AlarmPrecision.ofSpanFloorPow2Ns (gibiNanos 60.0))
+                        TimingWheelConfig.create
+                            None
+                            LevelBits.default'
+                            (AlarmPrecision.ofSpanFloorPow2Ns (gibiNanos 60.0))
 
                     let t = TimingWheel.create config start
                     let mutable numFired = 0
@@ -1570,7 +1577,7 @@ alarms:
         let start = TimeNs.epoch
 
         let config =
-            Config.create None LevelBits.default' (AlarmPrecision.ofSpanFloorPow2Ns (gibiNanos 1.0))
+            TimingWheelConfig.create None LevelBits.default' (AlarmPrecision.ofSpanFloorPow2Ns (gibiNanos 1.0))
 
         let t = TimingWheel.create<bool ref> config start
 

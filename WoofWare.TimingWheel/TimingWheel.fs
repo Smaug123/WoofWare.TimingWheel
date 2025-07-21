@@ -3,7 +3,7 @@ namespace WoofWare.TimingWheel
 type TimingWheel<'a> =
     internal
         {
-            Config : Config
+            Config : TimingWheelConfig
             Start : TimeNs
             MaxIntervalNum : IntervalNum
             mutable Now : TimeNs
@@ -15,9 +15,10 @@ type TimingWheel<'a> =
 [<RequireQualifiedAccess>]
 module TimingWheel =
 
-    let internal config<'a> (t : TimingWheel<'a>) : Config = t.Config
+    let internal config<'a> (t : TimingWheel<'a>) : TimingWheelConfig = t.Config
 
-    let alarmPrecision<'a> (t : TimingWheel<'a>) : TimeNs.Span = Config.alarmPrecision t.Config
+    let alarmPrecision<'a> (t : TimingWheel<'a>) : TimeNs.Span =
+        TimingWheelConfig.alarmPrecision t.Config
 
     /// The earliest time that ever existed for this TimingWheel.
     let start<'a> (t : TimingWheel<'a>) : TimeNs = t.Start
@@ -145,7 +146,7 @@ module TimingWheel =
         intervalNumStartUnchecked t (intervalNum t time)
 
     let invariant<'a> (inv : 'a -> unit) (t : TimingWheel<ExternalEltValue<'a>>) : unit =
-        Config.invariant t.Config
+        TimingWheelConfig.invariant t.Config
 
         do
             if t.Start < minTime then
@@ -232,7 +233,7 @@ module TimingWheel =
                 let toTime = min toTime (InternalElt.minAlarmTime (pool t) minElt key)
                 advanceClock t toTime handleFired
 
-    let create<'a> (config : Config) (start : TimeNs) : TimingWheel<ExternalEltValue<'a>> =
+    let create<'a> (config : TimingWheelConfig) (start : TimeNs) : TimingWheel<ExternalEltValue<'a>> =
         if start < TimeNs.epoch then
             invalidArg "start" $"TimingWheel.create got start {start} before the epoch"
 

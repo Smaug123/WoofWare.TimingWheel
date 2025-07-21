@@ -21,7 +21,7 @@
       <Compile Include="NumKeyBits.fs" />
       <Compile Include="LevelBits.fs" />
       <Compile Include="AlarmPrecision.fs" />
-      <Compile Include="Config.fs" />
+      <Compile Include="TimingWheelConfig.fs" />
       <Compile Include="IntervalNumSpan.fs" />
       <Compile Include="IntervalNum.fs" />
       <Compile Include="Key.fs" />

@@ -3,7 +3,7 @@ namespace WoofWare.TimingWheel
 type TimingWheel<'a> =
     internal
         {
-            Config : Config
+            Config : TimingWheelConfig
             Start : TimeNs
             MaxIntervalNum : IntervalNum
             mutable Now : TimeNs
@@ -51,7 +51,7 @@ module TimingWheel =
     /// <param name="config"></param>
     /// <param name="start">current time of the wheel</param>
     /// <exception cref="InvalidArgumentException"><c>start &lt; TimeNs.epoch</c></exception>
-    val create<'a> : config : Config -> start : TimeNs -> 'a ExternalEltValue TimingWheel
+    val create<'a> : config : TimingWheelConfig -> start : TimeNs -> 'a ExternalEltValue TimingWheel
 
     /// <summary>
     /// Accessor: the length of the equally-sized intervals this wheel divides time into.

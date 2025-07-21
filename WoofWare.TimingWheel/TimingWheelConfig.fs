@@ -1,6 +1,6 @@
 namespace WoofWare.TimingWheel
 
-type Config =
+type TimingWheelConfig =
     internal
         {
             AlarmPrecision : AlarmPrecision
@@ -9,8 +9,8 @@ type Config =
         }
 
 [<RequireQualifiedAccess>]
-module Config =
-    let alarmPrecision (t : Config) : TimeNs.Span = AlarmPrecision.toSpan t.AlarmPrecision
+module TimingWheelConfig =
+    let alarmPrecision (t : TimingWheelConfig) : TimeNs.Span = AlarmPrecision.toSpan t.AlarmPrecision
 
     let levelBitsDefault : LevelBits = LevelBits.default'
 
@@ -22,13 +22,13 @@ module Config =
     let maxNumLevelBits (p : AlarmPrecision) : NumKeyBits =
         NumKeyBits.maxValue - (AlarmPrecision.numKeyBits p)
 
-    let invariant (t : Config) : unit =
+    let invariant (t : TimingWheelConfig) : unit =
         if LevelBits.numBitsInternal t.LevelBits > maxNumLevelBits t.AlarmPrecision then
             failwith "expected LevelBits at most max"
 
         LevelBits.invariant t.LevelBits
 
-    let create (capacity : int option) (levelBits : LevelBits) (alarmPrecision : AlarmPrecision) : Config =
+    let create (capacity : int option) (levelBits : LevelBits) (alarmPrecision : AlarmPrecision) : TimingWheelConfig =
         let levelBits = LevelBits.trim levelBits (maxNumLevelBits alarmPrecision)
 
         {
@@ -37,10 +37,10 @@ module Config =
             Capacity = capacity
         }
 
-    let microsecondPrecision () : Config =
+    let microsecondPrecision () : TimingWheelConfig =
         create None (LevelBits.createThrowing [ 10 ; 10 ; 6 ; 6 ; 5 ]) AlarmPrecision.aboutOneMicrosecond
 
-    let durations (t : Config) : TimeNs.Span list =
+    let durations (t : TimingWheelConfig) : TimeNs.Span list =
         let init =
             AlarmPrecision.numKeyBits t.AlarmPrecision |> NumKeyBits.toInt64 |> Checked.int
 
