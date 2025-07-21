@@ -83,6 +83,8 @@ module TimeNs =
 
         let isPositive (s : Span) : bool = s > 0L<span>
 
+        let div (a : Span) (b : Span) : int64 = a / b
+
     [<Literal>]
     let maxValueFor1usRounding : TimeNs =
         Span.maxValueFor1usRounding * 1L<timeNs / span>
@@ -115,3 +117,25 @@ module TimeNs =
         toInt64NsSinceEpoch t - toInt64NsSinceEpoch t2 |> Span.ofInt64Ns
 
     let maxValue : TimeNs = System.Int64.MaxValue * 1L<timeNs>
+
+    let private nextMultipleInternal (name : string) (canEqualAfter : bool) base_ after interval =
+        if interval <= Span.zero then
+            failwith $"%s{name} got nonpositive interval"
+
+        let baseToAfter = diff after base_
+
+        if baseToAfter < Span.zero then
+            // after < base, so choose k = 0
+            base_
+        else
+            let next = add base_ (Span.scaleInt64 interval (Span.div baseToAfter interval))
+
+            if next > after || (canEqualAfter && next = after) then
+                next
+            else
+                add next interval
+
+    /// Default `canEqualAfter` is `false`.
+    let nextMultiple (canEqualAfter : bool option) (base_ : TimeNs) (after : TimeNs) (interval : Span) : TimeNs =
+        let canEqualAfter = defaultArg canEqualAfter false
+        nextMultipleInternal "nextMultiple" canEqualAfter base_ after interval
