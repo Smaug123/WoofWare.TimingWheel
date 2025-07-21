@@ -35,7 +35,7 @@ module TestConfig =
 
             return
                 TimingWheelConfig.durations (TimingWheelConfig.microsecondPrecision ())
-                |> List.map Span.display
+                |> List.map TimeNs.Span.display
         }
 
     /// giga-nanoseecond
@@ -89,12 +89,12 @@ module TestConfig =
 
         expect {
             snapshot @"[02s.147483600]"
-            return durations None [ 1 ] |> List.map Span.display
+            return durations None [ 1 ] |> List.map TimeNs.Span.display
         }
 
         expect {
             snapshot @"[04s.294967200; 08s.589934500]"
-            return durations None [ 2 ; 1 ] |> List.map Span.display
+            return durations None [ 2 ; 1 ] |> List.map TimeNs.Span.display
         }
 
         expect {
@@ -134,7 +134,7 @@ module TestConfig =
   ""53375d23h53m38s.427388191""
 ]"
 
-            return durations None (List.replicate 32 1) |> List.map Span.display
+            return durations None (List.replicate 32 1) |> List.map TimeNs.Span.display
         }
 
         expect {
@@ -148,5 +148,5 @@ module TestConfig =
   ""106751d23h47m16s.854776382""
 ]"
 
-            return durations (Some true) [ 10 ; 10 ; 10 ] |> List.map Span.display
+            return durations (Some true) [ 10 ; 10 ; 10 ] |> List.map TimeNs.Span.display
         }

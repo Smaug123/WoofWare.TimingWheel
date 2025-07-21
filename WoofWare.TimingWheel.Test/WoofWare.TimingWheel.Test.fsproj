@@ -8,8 +8,6 @@
 
     <ItemGroup>
         <Compile Include="TestSurface.fs" />
-        <Compile Include="Span.fs" />
-        <Compile Include="TimeNs.fs" />
         <Compile Include="AlarmPrecision.fs" />
         <Compile Include="LevelBits.fs" />
         <Compile Include="TimingWheelConfig.fs" />

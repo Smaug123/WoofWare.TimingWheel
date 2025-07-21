@@ -122,6 +122,6 @@ module TestAlarmPrecision =
                 [ 1.0 ; 1e-3 ; 1e-6 ]
                 |> List.map (fun s ->
                     let span = TimeNs.Span.ofSec s
-                    Span.display span, AlarmPrecision.display (AlarmPrecision.ofSpanFloorPow2Ns span)
+                    TimeNs.Span.display span, AlarmPrecision.display (AlarmPrecision.ofSpanFloorPow2Ns span)
                 )
         }

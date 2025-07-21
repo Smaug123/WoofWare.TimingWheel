@@ -111,6 +111,7 @@ WoofWare.TimingWheel.TimeNsModule inherit obj
 WoofWare.TimingWheel.TimeNsModule+span inherit obj
 WoofWare.TimingWheel.TimeNsModule+SpanModule inherit obj
 WoofWare.TimingWheel.TimeNsModule+SpanModule.day [static field]: System.Int64 = 86400000000000
+WoofWare.TimingWheel.TimeNsModule+SpanModule.display [static method]: System.Int64 -> string
 WoofWare.TimingWheel.TimeNsModule+SpanModule.div [static method]: System.Int64 -> System.Int64 -> System.Int64
 WoofWare.TimingWheel.TimeNsModule+SpanModule.get_zero [static method]: unit -> System.Int64
 WoofWare.TimingWheel.TimeNsModule+SpanModule.hour [static field]: System.Int64 = 3600000000000
@@ -132,6 +133,7 @@ WoofWare.TimingWheel.TimeNsModule+SpanModule.toInt64Ns [static method]: System.I
 WoofWare.TimingWheel.TimeNsModule+SpanModule.zero [static property]: [read-only] System.Int64
 WoofWare.TimingWheel.TimeNsModule.add [static method]: System.Int64 -> System.Int64 -> System.Int64
 WoofWare.TimingWheel.TimeNsModule.diff [static method]: System.Int64 -> System.Int64 -> System.Int64
+WoofWare.TimingWheel.TimeNsModule.display [static method]: System.Int64 -> string
 WoofWare.TimingWheel.TimeNsModule.epoch [static property]: [read-only] System.Int64
 WoofWare.TimingWheel.TimeNsModule.get_epoch [static method]: unit -> System.Int64
 WoofWare.TimingWheel.TimeNsModule.get_maxValue [static method]: unit -> System.Int64
