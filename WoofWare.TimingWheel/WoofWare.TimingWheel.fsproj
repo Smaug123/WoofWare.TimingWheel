@@ -3,7 +3,7 @@
     <PropertyGroup>
       <TargetFramework>net5.0</TargetFramework>
       <GenerateDocumentationFile>true</GenerateDocumentationFile>
-      <Authors>Patrick Stevens</Authors>
+      <Authors>PatrickStevens</Authors>
       <Copyright>Copyright (c) Patrick Stevens 2025</Copyright>
       <Description>A timing wheel is a specialized priority queue for a set of time-based alarms.</Description>
       <RepositoryType>git</RepositoryType>
