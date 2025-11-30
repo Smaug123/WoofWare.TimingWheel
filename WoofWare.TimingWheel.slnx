@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="WoofWare.TimingWheel.Test/WoofWare.TimingWheel.Test.fsproj" />
+  <Project Path="WoofWare.TimingWheel/WoofWare.TimingWheel.fsproj" />
+</Solution>
