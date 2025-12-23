@@ -420,6 +420,43 @@ alarms:
             return TimingWheel.display t
         }
 
+    [<Test>]
+    let ``clear resets min cache so subsequent adds work correctly`` () =
+        // This test verifies that after clear, the min element cache (MinElt/EltKeyLowerBound)
+        // is properly reset. Without the fix, adding an element with a key higher than the
+        // pre-clear minimum would leave the stale cache intact, causing nextAlarmFiresAt to
+        // return incorrect results (or read freed memory).
+        let t = createUnit None (Some [ 1 ; 1 ]) None None
+
+        // Add element at interval 1
+        let _ = TimingWheel.addAtIntervalNum t IntervalNum.one ()
+
+        // Verify nextAlarmFiresAt returns the correct time
+        let beforeClear = TimingWheel.nextAlarmFiresAt t
+
+        // Clear the wheel
+        TimingWheel.clear t
+
+        // Add element at interval 3 (higher than the previous one)
+        let _ = TimingWheel.addAtIntervalNum t (IntervalNum.ofInt 3) ()
+
+        // nextAlarmFiresAt should return a time based on interval 3, not the stale interval 1
+        let afterClear = TimingWheel.nextAlarmFiresAt t
+
+        // The new time should be greater than the old time
+        match beforeClear, afterClear with
+        | Some before, Some after ->
+            if after <= before then
+                failwith
+                    $"Expected nextAlarmFiresAt after clear to be greater than before (before: %A{before}, after: %A{after})"
+        | _ -> failwith "Expected Some values"
+
+        // Also verify minAlarmIntervalNum returns the correct interval
+        let minInterval = TimingWheel.minAlarmIntervalNum t
+
+        if minInterval <> Some (IntervalNum.ofInt 3) then
+            failwith $"Expected minAlarmIntervalNum to return 3, got %A{minInterval}"
+
     let advanceClockToIntervalNumReturnRemovedIntervalNums t toTime =
         let r = ResizeArray ()
         advanceClockToIntervalNum t toTime (fun alarm -> r.Add (TimingWheel.Alarm.intervalNum t alarm))
@@ -1675,18 +1712,18 @@ alarms:
 
         expect {
             snapshot @"1970-01-01T00:00:00.5368709Z"
-            return TimingWheel.maxAlarmTimeInMinInterval t |> Option.get |> TimeNs.display
+            return TimingWheel.minAlarmTimeInMinInterval t |> Option.get |> TimeNs.display
         }
 
         TimingWheel.remove t a
-        TimingWheel.maxAlarmTimeInMinInterval t |> shouldEqual None
+        TimingWheel.minAlarmTimeInMinInterval t |> shouldEqual None
 
         let _ = addAfter (gibiNanos 2.1)
         let _ = addAfter (gibiNanos 3.9)
 
         expect {
             snapshot @"1970-01-01T00:00:02.2548578Z"
-            return TimingWheel.maxAlarmTimeInMinInterval t |> Option.get |> TimeNs.display
+            return TimingWheel.minAlarmTimeInMinInterval t |> Option.get |> TimeNs.display
         }
 
     [<Test>]
