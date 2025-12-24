@@ -17,7 +17,13 @@
         <Compile Include="TestAlarmPrecision.fs" />
         <Compile Include="TestConfig.fs" />
         <Compile Include="TestLevelBits.fs" />
-        <Compile Include="TestTimingWheel.fs" />
+        <Compile Include="TestTimingWheelHelpers.fs" />
+        <Compile Include="TestTimingWheelConfiguration.fs" />
+        <Compile Include="TestTimingWheelBasicOperations.fs" />
+        <Compile Include="TestTimingWheelAdvanceClock.fs" />
+        <Compile Include="TestTimingWheelAlarms.fs" />
+        <Compile Include="TestTimingWheelIntervalNum.fs" />
+        <Compile Include="TestTimingWheelErrorCases.fs" />
     </ItemGroup>
 
     <ItemGroup>
