@@ -4,6 +4,12 @@
 [![GitHub Actions status](https://github.com/Smaug123/WoofWare.TimingWheel/actions/workflows/dotnet.yaml/badge.svg)](https://github.com/Smaug123/WoofWare.TimingWheel/actions?query=branch%3Amain)
 [![License file](https://img.shields.io/github/license/Smaug123/WoofWare.TimingWheel)](./LICENCE.md)
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="logos/dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="logos/light.svg">
+  <img alt="Project logo: minimalistic face of a cartoon Shiba Inu. Its outline suggests a clock face, and its tongue is a large minute hand, while one eyebrow is a severe minute hand." src="logos/light.svg" width="300">
+</picture>
+
 This is the timing wheel from [janestreet/core_kernel](https://github.com/janestreet/core_kernel/tree/774a6821b14cbcdcde02cbbca1984ea32bf06184/timing_wheel).
 
 # Description
