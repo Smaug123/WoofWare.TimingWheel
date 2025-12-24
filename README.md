@@ -77,7 +77,7 @@ alarms, while the highest level has the least precision and stores the alarms fa
 in the future. As time increases, the timing wheel does a lazy radix sort of the alarm
 keys.
 
-This implementation makes `addAlarm] and `removeAlarm` constant time, while
+This implementation makes `addAlarm` and `removeAlarm` constant time, while
 `advanceClock` takes time proportional to the amount of time the clock is advanced.
 With a sufficient number of alarms, this is more efficient than a log(N) heap
 implementation of a priority queue.
