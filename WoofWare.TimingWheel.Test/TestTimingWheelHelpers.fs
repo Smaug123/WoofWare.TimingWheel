@@ -54,7 +54,7 @@ module TestTimingWheelHelpers =
         advanceClockToIntervalNum t toTime (fun alarm -> r.Add (TimingWheel.Alarm.intervalNum t alarm))
         Seq.toList r
 
-    /// [all_sums n] returns all combinations of nonnegative ints that sum to [n].
+    /// [all_sums n] returns all combinations of positive ints that sum to [n].
     let allSums (n : int) : int list list =
         let results = Array.create (n + 1) []
         results.[0] <- [ [] ]
