@@ -426,36 +426,36 @@ alarms:
         // is properly reset. Without the fix, adding an element with a key higher than the
         // pre-clear minimum would leave the stale cache intact, causing nextAlarmFiresAt to
         // return incorrect results (or read freed memory).
+        //
+        // We add multiple elements before clear so that MinElt points to a slot that won't
+        // be immediately reused when we add a single element after clear.
         let t = createUnit None (Some [ 1 ; 1 ]) None None
 
-        // Add element at interval 1
+        // Add elements at intervals 1, 2, 3 - MinElt will point to interval 1's element
         let _ = TimingWheel.addAtIntervalNum t IntervalNum.one ()
-
-        // Verify nextAlarmFiresAt returns the correct time
-        let beforeClear = TimingWheel.nextAlarmFiresAt t
-
-        // Clear the wheel
-        TimingWheel.clear t
-
-        // Add element at interval 3 (higher than the previous one)
+        let _ = TimingWheel.addAtIntervalNum t (IntervalNum.ofInt 2) ()
         let _ = TimingWheel.addAtIntervalNum t (IntervalNum.ofInt 3) ()
 
-        // nextAlarmFiresAt should return a time based on interval 3, not the stale interval 1
-        let afterClear = TimingWheel.nextAlarmFiresAt t
+        // Verify minAlarmIntervalNum returns the minimum (1)
+        TimingWheel.minAlarmIntervalNum t |> shouldEqual (Some IntervalNum.one)
 
-        // The new time should be greater than the old time
-        match beforeClear, afterClear with
-        | Some before, Some after ->
-            if after <= before then
-                failwith
-                    $"Expected nextAlarmFiresAt after clear to be greater than before (before: %A{before}, after: %A{after})"
-        | _ -> failwith "Expected Some values"
+        // Clear the wheel - this frees all elements but without the fix, MinElt still
+        // points to the freed element at interval 1, and EltKeyLowerBound is still 1
+        TimingWheel.clear t
 
-        // Also verify minAlarmIntervalNum returns the correct interval
+        // Add ONE element at a higher interval (5). The pool will reuse one freed slot,
+        // but likely not the one MinElt points to. With the bug:
+        // - EltKeyLowerBound is still 1
+        // - Since 5 > 1, internalAddElt won't update MinElt
+        // - MinElt still points to a freed/garbage slot
+        let _ = TimingWheel.addAtIntervalNum t (IntervalNum.ofInt 5) ()
+
+        // With the fix, minAlarmIntervalNum should return 5 (the only element)
+        // Without the fix, it might return garbage or the wrong value
         let minInterval = TimingWheel.minAlarmIntervalNum t
 
-        if minInterval <> Some (IntervalNum.ofInt 3) then
-            failwith $"Expected minAlarmIntervalNum to return 3, got %A{minInterval}"
+        if minInterval <> Some (IntervalNum.ofInt 5) then
+            failwith $"Expected minAlarmIntervalNum to return 5, got %A{minInterval}"
 
     let advanceClockToIntervalNumReturnRemovedIntervalNums t toTime =
         let r = ResizeArray ()

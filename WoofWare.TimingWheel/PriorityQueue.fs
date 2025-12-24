@@ -175,16 +175,17 @@ module internal PriorityQueue =
         |> Array.iteri (fun levelIndex level ->
             if levelIndex <> level.Index then
                 failwith $"expected level %i{levelIndex} to have that index"
-                levelInvariant level
 
-                if levelIndex > 0 then
-                    let prevLevel = t.Levels.[levelIndex - 1]
+            levelInvariant level
 
-                    if level.KeysPerSlot <> Span.succ prevLevel.DiffMaxMinAllowedKey then
-                        failwith "TODO: describe failure mode"
+            if levelIndex > 0 then
+                let prevLevel = t.Levels.[levelIndex - 1]
 
-                    if level.MinAllowedKey <> Level.computeMinAllowedKey level prevLevel.MaxAllowedKey then
-                        failwith "TODO: describe failure mode"
+                if level.KeysPerSlot <> Span.succ prevLevel.DiffMaxMinAllowedKey then
+                    failwith "TODO: describe failure mode"
+
+                if level.MinAllowedKey <> Level.computeMinAllowedKey level prevLevel.MaxAllowedKey then
+                    failwith "TODO: describe failure mode"
         )
 
     let minElt' (t : PriorityQueue<ExternalEltValue<'a>>) : InternalElt =
@@ -550,6 +551,8 @@ module internal PriorityQueue =
     let clear (t : PriorityQueue<ExternalEltValue<'a>>) : unit =
         if not (isEmpty t) then
             t.Length <- 0
+            t.MinElt <- InternalElt.null'
+            t.EltKeyLowerBound <- minAllowedKey t
             let pool = t.Pool
             let freeElt elt = InternalElt.free pool elt
             let levels = t.Levels
