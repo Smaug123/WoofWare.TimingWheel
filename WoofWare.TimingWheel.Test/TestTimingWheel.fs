@@ -420,6 +420,48 @@ alarms:
             return TimingWheel.display t
         }
 
+    [<Test>]
+    let ``clear resets min cache so subsequent adds work correctly`` () =
+        // This test verifies that after clear, the min element cache (MinElt/EltKeyLowerBound)
+        // is properly reset. Without the fix, adding an element with a key higher than the
+        // pre-clear minimum would leave the stale cache intact, causing nextAlarmFiresAt to
+        // return incorrect results (or read freed memory).
+        //
+        // We add multiple elements before clear so that MinElt points to a slot that won't
+        // be immediately reused when we add a single element after clear.
+        let t = createUnit None (Some [ 1 ; 1 ]) None None
+
+        // Add elements at intervals 1, 2, 3 - MinElt will point to interval 1's element
+        let _ = TimingWheel.addAtIntervalNum t IntervalNum.one ()
+        let _ = TimingWheel.addAtIntervalNum t (IntervalNum.ofInt 2) ()
+        let _ = TimingWheel.addAtIntervalNum t (IntervalNum.ofInt 3) ()
+
+        // Verify minAlarmIntervalNum returns the minimum (1)
+        TimingWheel.minAlarmIntervalNum t |> shouldEqual (Some IntervalNum.one)
+
+        // Clear the wheel - this frees all elements but without the fix, MinElt still
+        // points to the freed element at interval 1, and EltKeyLowerBound is still 1
+        TimingWheel.clear t
+
+        // Add element at interval 5 first. The pool will reuse one freed slot,
+        // but likely not the one MinElt points to. With the bug:
+        // - EltKeyLowerBound is still 1
+        // - Since 5 > 1, internalAddElt won't update MinElt
+        // - MinElt still points to a freed/garbage slot
+        let _ = TimingWheel.addAtIntervalNum t (IntervalNum.ofInt 5) ()
+
+        // With the fix, minAlarmIntervalNum should return 5 (the only element)
+        // Without the fix, it might return garbage or the wrong value
+        TimingWheel.minAlarmIntervalNum t |> shouldEqual (Some (IntervalNum.ofInt 5))
+
+        // Now add element at interval 4 (lower than 5). This forces a min-update.
+        // If the cache was properly reset after clear, the min should now be 4.
+        // If the cache wasn't reset, pool reuse could have masked the bug above,
+        // but this second add definitively tests that min-tracking works correctly.
+        let _ = TimingWheel.addAtIntervalNum t (IntervalNum.ofInt 4) ()
+
+        TimingWheel.minAlarmIntervalNum t |> shouldEqual (Some (IntervalNum.ofInt 4))
+
     let advanceClockToIntervalNumReturnRemovedIntervalNums t toTime =
         let r = ResizeArray ()
         advanceClockToIntervalNum t toTime (fun alarm -> r.Add (TimingWheel.Alarm.intervalNum t alarm))
@@ -1675,18 +1717,18 @@ alarms:
 
         expect {
             snapshot @"1970-01-01T00:00:00.5368709Z"
-            return TimingWheel.maxAlarmTimeInMinInterval t |> Option.get |> TimeNs.display
+            return TimingWheel.minAlarmTimeInMinInterval t |> Option.get |> TimeNs.display
         }
 
         TimingWheel.remove t a
-        TimingWheel.maxAlarmTimeInMinInterval t |> shouldEqual None
+        TimingWheel.minAlarmTimeInMinInterval t |> shouldEqual None
 
         let _ = addAfter (gibiNanos 2.1)
         let _ = addAfter (gibiNanos 3.9)
 
         expect {
             snapshot @"1970-01-01T00:00:02.2548578Z"
-            return TimingWheel.maxAlarmTimeInMinInterval t |> Option.get |> TimeNs.display
+            return TimingWheel.minAlarmTimeInMinInterval t |> Option.get |> TimeNs.display
         }
 
     [<Test>]
@@ -1729,4 +1771,219 @@ alarms:
                         t
                         (IntervalNum.succ (TimingWheel.intervalNum t t.MaxAllowedAlarmTime))
                         ()
+        }
+
+    [<Test>]
+    let ``clear resets min cache so nextAlarmFiresAt works correctly`` () =
+        // This test verifies that after clear, nextAlarmFiresAt returns the correct value
+        // for elements added after the clear, rather than stale data from before clear.
+        let t = createUnit None (Some [ 1 ; 1 ]) None None
+
+        // Add elements at intervals 1, 2, 3
+        let _ = TimingWheel.addAtIntervalNum t IntervalNum.one ()
+        let _ = TimingWheel.addAtIntervalNum t (IntervalNum.ofInt 2) ()
+        let _ = TimingWheel.addAtIntervalNum t (IntervalNum.ofInt 3) ()
+
+        // nextAlarmFiresAt should return the fire time for interval 1 (which is start of interval 2)
+        let firesBefore = TimingWheel.nextAlarmFiresAt t
+
+        firesBefore.IsSome |> shouldEqual true
+
+        // Clear the wheel
+        TimingWheel.clear t
+
+        // nextAlarmFiresAt should now return None since wheel is empty
+        TimingWheel.nextAlarmFiresAt t |> shouldEqual None
+
+        // Add element at interval 5 first
+        let _ = TimingWheel.addAtIntervalNum t (IntervalNum.ofInt 5) ()
+
+        // nextAlarmFiresAt should return the fire time for interval 5 (start of interval 6)
+        let firesAfterFirst = TimingWheel.nextAlarmFiresAt t
+
+        firesAfterFirst.IsSome |> shouldEqual true
+
+        // The fire time should be for interval 6 (since alarms in interval 5 fire when we reach interval 6)
+        let expectedFireTimeFor5 = TimingWheel.intervalNumStart t (IntervalNum.ofInt 6)
+
+        firesAfterFirst |> shouldEqual (Some expectedFireTimeFor5)
+
+        // Now add element at interval 4 (lower than 5). This forces a min-update.
+        // If the cache was properly reset after clear, nextAlarmFiresAt should now
+        // return the fire time for interval 4 (start of interval 5).
+        // If the cache wasn't reset, pool reuse could have masked any bug above,
+        // but this second add definitively tests that min-tracking works correctly.
+        let _ = TimingWheel.addAtIntervalNum t (IntervalNum.ofInt 4) ()
+
+        let firesAfterSecond = TimingWheel.nextAlarmFiresAt t
+
+        // The fire time should be for interval 5 (since alarms in interval 4 fire when we reach interval 5)
+        let expectedFireTimeFor4 = TimingWheel.intervalNumStart t (IntervalNum.ofInt 5)
+
+        firesAfterSecond |> shouldEqual (Some expectedFireTimeFor4)
+
+    [<Test>]
+    let ``advanceClockStopAtNextAlarm stops at alarm's minAlarmTime without firing`` () =
+        // advanceClockStopAtNextAlarm advances time to min(toTime, minAlarmTime of next alarm)
+        // This is the actual scheduled time of the alarm, not the "fire time" (next interval start).
+        // The alarm does NOT fire - it only fires when we advance past its interval.
+        let t = createUnit None (Some [ 10 ]) None None
+
+        // Add an alarm at interval 5 - this schedules it at intervalNumStart(5)
+        let _ = TimingWheel.addAtIntervalNum t (IntervalNum.ofInt 5) ()
+
+        // The alarm's minAlarmTime is the start of interval 5
+        let alarmTime = TimingWheel.intervalNumStart t (IntervalNum.ofInt 5)
+
+        // Try to advance well past the alarm with advanceClockStopAtNextAlarm
+        let farFuture = TimingWheel.intervalNumStart t (IntervalNum.ofInt 100)
+
+        TimingWheel.advanceClockStopAtNextAlarm t farFuture (fun _ -> failwith "should not fire")
+
+        // Time should have stopped at the alarm's scheduled time (minAlarmTime)
+        TimingWheel.now t |> shouldEqual alarmTime
+
+        // The alarm has NOT fired yet - we've stopped AT its time, not past its interval
+        TimingWheel.length t |> shouldEqual 1
+
+        // Now use firePastAlarms to fire alarms whose exact time has passed
+        let mutable fired = 0
+        TimingWheel.firePastAlarms t (fun _ -> fired <- fired + 1)
+        fired |> shouldEqual 1
+
+        // Wheel should be empty now
+        TimingWheel.isEmpty t |> shouldEqual true
+
+    [<Test>]
+    let ``advanceClockStopAtNextAlarm stops before alarm if toTime is earlier`` () =
+        let t = createUnit None (Some [ 10 ]) None None
+
+        // Add an alarm at interval 10
+        let _ = TimingWheel.addAtIntervalNum t (IntervalNum.ofInt 10) ()
+
+        // Try to advance to interval 5 (before the alarm)
+        let earlyTime = TimingWheel.intervalNumStart t (IntervalNum.ofInt 5)
+
+        TimingWheel.advanceClockStopAtNextAlarm t earlyTime (fun _ -> failwith "should not fire")
+
+        // Time should be at earlyTime
+        TimingWheel.now t |> shouldEqual earlyTime
+
+        // Alarm should still be there
+        TimingWheel.length t |> shouldEqual 1
+
+    [<Test>]
+    let ``advanceClockStopAtNextAlarm on empty wheel advances to toTime`` () =
+        let t = createUnit None (Some [ 10 ]) None None
+
+        let targetTime = TimingWheel.intervalNumStart t (IntervalNum.ofInt 50)
+
+        TimingWheel.advanceClockStopAtNextAlarm t targetTime (fun _ -> failwith "should not fire")
+
+        TimingWheel.now t |> shouldEqual targetTime
+
+    [<Test>]
+    let ``advanceClockStopAtNextAlarm interaction with firePastAlarms`` () =
+        // Test that advanceClockStopAtNextAlarm + firePastAlarms can be used to
+        // precisely control firing of alarms within an interval
+        let t = create<int> None (Some [ 10 ]) None None
+
+        // Add multiple alarms at the same interval but different exact times
+        let baseTime = TimingWheel.intervalNumStart t (IntervalNum.ofInt 5)
+        let offset1 = TimeNs.Span.ofInt64Ns 100L
+        let offset2 = TimeNs.Span.ofInt64Ns 200L
+
+        let _ = TimingWheel.add t (TimeNs.add baseTime offset1) 1
+        let _ = TimingWheel.add t (TimeNs.add baseTime offset2) 2
+
+        // Both should be in interval 5
+        TimingWheel.minAlarmIntervalNum t |> shouldEqual (Some (IntervalNum.ofInt 5))
+
+        // Advance to just past the first alarm's exact time (within interval 5)
+        let afterFirst = TimeNs.add baseTime (TimeNs.Span.ofInt64Ns 150L)
+        let mutable firedValues = []
+
+        // advanceClockStopAtNextAlarm won't fire within-interval alarms until we reach the next interval
+        TimingWheel.advanceClockStopAtNextAlarm
+            t
+            afterFirst
+            (fun a -> firedValues <- TimingWheel.Alarm.value t a :: firedValues)
+
+        // Nothing should have fired yet since we're still in interval 5
+        firedValues |> shouldEqual []
+        TimingWheel.length t |> shouldEqual 2
+
+        // Now use firePastAlarms to fire alarms whose exact time has passed
+        TimingWheel.firePastAlarms t (fun a -> firedValues <- TimingWheel.Alarm.value t a :: firedValues)
+
+        // Only the first alarm (at offset1 = 100ns) should have fired
+        firedValues |> shouldEqual [ 1 ]
+        TimingWheel.length t |> shouldEqual 1
+
+        // Advance past the second alarm's time and use firePastAlarms again
+        let afterSecond = TimeNs.add baseTime (TimeNs.Span.ofInt64Ns 250L)
+        TimingWheel.advanceClockStopAtNextAlarm t afterSecond (fun _ -> failwith "should not fire via advanceClock")
+        TimingWheel.firePastAlarms t (fun a -> firedValues <- TimingWheel.Alarm.value t a :: firedValues)
+
+        firedValues |> shouldEqual [ 2 ; 1 ]
+        TimingWheel.length t |> shouldEqual 0
+
+    [<Test>]
+    let ``nextAlarmFiresAtThrowing on empty wheel throws`` () =
+        let t = createUnit None (Some [ 10 ]) None None
+
+        expect {
+            snapshotThrows @"System.Exception: nextAlarmFiresAtThrowing of empty timing wheel"
+            return! fun () -> TimingWheel.nextAlarmFiresAtThrowing t
+        }
+
+    [<Test>]
+    let ``minAlarmIntervalNumThrowing on empty wheel throws`` () =
+        let t = createUnit None (Some [ 10 ]) None None
+
+        expect {
+            snapshotThrows @"System.Exception: minAlarmIntervalNumThrowing of empty timing_wheel"
+            return! fun () -> TimingWheel.minAlarmIntervalNumThrowing t
+        }
+
+    [<Test>]
+    let ``maxAlarmTimeInMinIntervalThrowing on empty wheel throws`` () =
+        let t = createUnit None (Some [ 10 ]) None None
+
+        expect {
+            snapshotThrows @"System.Exception: maxAlarmTimeInMinIntervalThrowing of empty timing wheel"
+            return! fun () -> TimingWheel.maxAlarmTimeInMinIntervalThrowing t
+        }
+
+    [<Test>]
+    let ``minAlarmTimeInMinIntervalThrowing on empty wheel throws`` () =
+        let t = createUnit None (Some [ 10 ]) None None
+
+        expect {
+            snapshotThrows @"System.Exception: minAlarmTimeInMinIntervalThrowing of empty timing wheel"
+            return! fun () -> TimingWheel.minAlarmTimeInMinIntervalThrowing t
+        }
+
+    [<Test>]
+    let ``create with start before epoch throws`` () =
+        let beforeEpoch = TimeNs.sub TimeNs.epoch (TimeNs.Span.ofInt64Ns 1L)
+        let config = createConfig None (Some [ 10 ]) (gibiNanos 1.0)
+
+        expect {
+            snapshotThrows
+                @"System.ArgumentException: TimingWheel.create got start -1 before the epoch (Parameter 'start')"
+
+            return! fun () -> TimingWheel.create<unit> config beforeEpoch
+        }
+
+    [<Test>]
+    let ``intervalNum with time before epoch throws`` () =
+        let t = createUnit None (Some [ 10 ]) None None
+        let beforeEpoch = TimeNs.sub TimeNs.epoch (TimeNs.Span.ofInt64Ns 1L)
+
+        expect {
+            snapshotThrows
+                @"System.ArgumentException: intervalNum got time too far in the past: -1, min is 0 (Parameter 'time')"
+
+            return! fun () -> TimingWheel.intervalNum t beforeEpoch
         }

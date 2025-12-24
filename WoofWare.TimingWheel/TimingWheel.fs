@@ -356,7 +356,7 @@ module TimingWheel =
         let elt = PriorityQueue.minElt' t.PriorityQueue
 
         if InternalElt.isNull elt then
-            failwith "minAlarmTimeInMinIntervalExn of empty timing wheel"
+            failwith "minAlarmTimeInMinIntervalThrowing of empty timing wheel"
 
         minAlarmTimeInList t elt
 

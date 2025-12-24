@@ -178,3 +178,20 @@ module TestTimeNs =
 
         if result < lowerBound || result > upperBound then
             failwith "result out of bounds"
+
+        // Check the result is actually a multiple of interval from base_
+        let diff = TimeNs.diff result base_
+        let quotient = TimeNs.Span.div diff interval
+        let remainder = diff - TimeNs.Span.scaleInt64 interval quotient
+
+        if remainder <> TimeNs.Span.zero then
+            failwith $"result is not a multiple of interval from base_: remainder = %A{remainder}"
+
+        // Check the result is the smallest valid multiple (result - interval would be too small)
+        let prevMultiple = TimeNs.sub result interval
+
+        if canEqualAfter && prevMultiple >= after then
+            failwith "result is not the smallest valid multiple (prevMultiple >= after when canEqualAfter)"
+
+        if not canEqualAfter && prevMultiple > after then
+            failwith "result is not the smallest valid multiple (prevMultiple > after when not canEqualAfter)"
