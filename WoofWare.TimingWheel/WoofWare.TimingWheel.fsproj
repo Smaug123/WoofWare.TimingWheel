@@ -10,6 +10,7 @@
       <RepositoryUrl>https://github.com/Smaug123/WoofWare.TimingWheel</RepositoryUrl>
       <PackageLicenseExpression>MIT</PackageLicenseExpression>
       <PackageReadmeFile>README.md</PackageReadmeFile>
+      <PackageIcon>light.png</PackageIcon>
       <PackageTags>timing_wheel;core_kernel;ocaml</PackageTags>
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
@@ -34,6 +35,10 @@
       <EmbeddedResource Include="SurfaceBaseline.txt" />
       <EmbeddedResource Include="../version.json" />
       <None Include="..\README.md">
+        <Pack>True</Pack>
+        <PackagePath>\</PackagePath>
+      </None>
+      <None Include="..\logos\light.png">
         <Pack>True</Pack>
         <PackagePath>\</PackagePath>
       </None>
