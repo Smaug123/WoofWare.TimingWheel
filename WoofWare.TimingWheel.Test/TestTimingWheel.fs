@@ -443,7 +443,7 @@ alarms:
         // points to the freed element at interval 1, and EltKeyLowerBound is still 1
         TimingWheel.clear t
 
-        // Add ONE element at a higher interval (5). The pool will reuse one freed slot,
+        // Add element at interval 5 first. The pool will reuse one freed slot,
         // but likely not the one MinElt points to. With the bug:
         // - EltKeyLowerBound is still 1
         // - Since 5 > 1, internalAddElt won't update MinElt
@@ -452,10 +452,15 @@ alarms:
 
         // With the fix, minAlarmIntervalNum should return 5 (the only element)
         // Without the fix, it might return garbage or the wrong value
-        let minInterval = TimingWheel.minAlarmIntervalNum t
+        TimingWheel.minAlarmIntervalNum t |> shouldEqual (Some (IntervalNum.ofInt 5))
 
-        if minInterval <> Some (IntervalNum.ofInt 5) then
-            failwith $"Expected minAlarmIntervalNum to return 5, got %A{minInterval}"
+        // Now add element at interval 4 (lower than 5). This forces a min-update.
+        // If the cache was properly reset after clear, the min should now be 4.
+        // If the cache wasn't reset, pool reuse could have masked the bug above,
+        // but this second add definitively tests that min-tracking works correctly.
+        let _ = TimingWheel.addAtIntervalNum t (IntervalNum.ofInt 4) ()
+
+        TimingWheel.minAlarmIntervalNum t |> shouldEqual (Some (IntervalNum.ofInt 4))
 
     let advanceClockToIntervalNumReturnRemovedIntervalNums t toTime =
         let r = ResizeArray ()
@@ -1790,18 +1795,32 @@ alarms:
         // nextAlarmFiresAt should now return None since wheel is empty
         TimingWheel.nextAlarmFiresAt t |> shouldEqual None
 
-        // Add ONE element at a higher interval (5)
+        // Add element at interval 5 first
         let _ = TimingWheel.addAtIntervalNum t (IntervalNum.ofInt 5) ()
 
         // nextAlarmFiresAt should return the fire time for interval 5 (start of interval 6)
-        let firesAfter = TimingWheel.nextAlarmFiresAt t
+        let firesAfterFirst = TimingWheel.nextAlarmFiresAt t
 
-        firesAfter.IsSome |> shouldEqual true
+        firesAfterFirst.IsSome |> shouldEqual true
 
         // The fire time should be for interval 6 (since alarms in interval 5 fire when we reach interval 6)
-        let expectedFireTime = TimingWheel.intervalNumStart t (IntervalNum.ofInt 6)
+        let expectedFireTimeFor5 = TimingWheel.intervalNumStart t (IntervalNum.ofInt 6)
 
-        firesAfter |> shouldEqual (Some expectedFireTime)
+        firesAfterFirst |> shouldEqual (Some expectedFireTimeFor5)
+
+        // Now add element at interval 4 (lower than 5). This forces a min-update.
+        // If the cache was properly reset after clear, nextAlarmFiresAt should now
+        // return the fire time for interval 4 (start of interval 5).
+        // If the cache wasn't reset, pool reuse could have masked any bug above,
+        // but this second add definitively tests that min-tracking works correctly.
+        let _ = TimingWheel.addAtIntervalNum t (IntervalNum.ofInt 4) ()
+
+        let firesAfterSecond = TimingWheel.nextAlarmFiresAt t
+
+        // The fire time should be for interval 5 (since alarms in interval 4 fire when we reach interval 5)
+        let expectedFireTimeFor4 = TimingWheel.intervalNumStart t (IntervalNum.ofInt 5)
+
+        firesAfterSecond |> shouldEqual (Some expectedFireTimeFor4)
 
     [<Test>]
     let ``advanceClockStopAtNextAlarm stops at alarm's minAlarmTime without firing`` () =
@@ -1885,7 +1904,10 @@ alarms:
         let mutable firedValues = []
 
         // advanceClockStopAtNextAlarm won't fire within-interval alarms until we reach the next interval
-        TimingWheel.advanceClockStopAtNextAlarm t afterFirst (fun a -> firedValues <- TimingWheel.Alarm.value t a :: firedValues)
+        TimingWheel.advanceClockStopAtNextAlarm
+            t
+            afterFirst
+            (fun a -> firedValues <- TimingWheel.Alarm.value t a :: firedValues)
 
         // Nothing should have fired yet since we're still in interval 5
         firedValues |> shouldEqual []
@@ -1938,7 +1960,7 @@ alarms:
         let t = createUnit None (Some [ 10 ]) None None
 
         expect {
-            snapshotThrows @"System.Exception: minAlarmTimeInMinIntervalExn of empty timing wheel"
+            snapshotThrows @"System.Exception: minAlarmTimeInMinIntervalThrowing of empty timing wheel"
             return! fun () -> TimingWheel.minAlarmTimeInMinIntervalThrowing t
         }
 
@@ -1948,7 +1970,9 @@ alarms:
         let config = createConfig None (Some [ 10 ]) (gibiNanos 1.0)
 
         expect {
-            snapshotThrows @"System.ArgumentException: TimingWheel.create got start -1 before the epoch (Parameter 'start')"
+            snapshotThrows
+                @"System.ArgumentException: TimingWheel.create got start -1 before the epoch (Parameter 'start')"
+
             return! fun () -> TimingWheel.create<unit> config beforeEpoch
         }
 
@@ -1958,6 +1982,8 @@ alarms:
         let beforeEpoch = TimeNs.sub TimeNs.epoch (TimeNs.Span.ofInt64Ns 1L)
 
         expect {
-            snapshotThrows @"System.ArgumentException: intervalNum got time too far in the past: -1, min is 0 (Parameter 'time')"
+            snapshotThrows
+                @"System.ArgumentException: intervalNum got time too far in the past: -1, min is 0 (Parameter 'time')"
+
             return! fun () -> TimingWheel.intervalNum t beforeEpoch
         }
