@@ -81,7 +81,8 @@ implementation of a priority queue.
 A timing wheel `t` can only handle a (typically large) bounded range of times as
 determined by the current time, `now t`, and the `levelBits` and `alarmPrecision`
 arguments supplied to `create`. Various functions raise if they are supplied a time
-smaller than `now t` or `> maxAllowedAlarmTime t`. This situation likely indicates
+before the start of the current interval (i.e. `now t` rounded down to `alarmPrecision`)
+or `> maxAllowedAlarmTime t`. This situation likely indicates
 a misconfiguration of the `levelBits` and/or `alarmPrecision`. Here is the duration
 of `maxAllowedAlarmTime t - now t` using the default `levelBits`.
 
