@@ -237,7 +237,7 @@ module TimingWheel =
     /// <summary>
     /// The smallest <c>Alarm.intervalNum</c> of all alarms in the wheel.
     /// </summary>
-    val minAlarmIntervalNum<'a> : 'a ExternalEltValue TimingWheel -> IntervalNum option
+    val minAlarmIntervalNum<'a> : 'a ExternalEltValue TimingWheel -> IntervalNum voption
 
     /// <summary>
     /// The smallest <c>Alarm.intervalNum</c> of all alarms in the wheel.
@@ -253,7 +253,7 @@ module TimingWheel =
     /// calling <c>firePastAlarms</c> to fire the alarms in that interval.
     /// This is useful when simulating time, to ensure that alarms are processed in order.
     /// </remarks>
-    val maxAlarmTimeInMinInterval<'a> : 'a ExternalEltValue TimingWheel -> TimeNs option
+    val maxAlarmTimeInMinInterval<'a> : 'a ExternalEltValue TimingWheel -> TimeNs voption
 
     /// <summary>
     /// The minimum alarm time over all alarms in the wheel.
@@ -261,7 +261,7 @@ module TimingWheel =
     /// <remarks>
     /// This is useful for advancing to the exact time when the next alarm is scheduled to fire.
     /// </remarks>
-    val minAlarmTimeInMinInterval<'a> : 'a ExternalEltValue TimingWheel -> TimeNs option
+    val minAlarmTimeInMinInterval<'a> : 'a ExternalEltValue TimingWheel -> TimeNs voption
 
     /// <summary>
     /// The maximum alarm time over all alarms in the earliest interval of the wheel.
@@ -289,7 +289,7 @@ module TimingWheel =
       (or all alarms are in the max interval, and hence cannot fire by [advance_clock]).
       If [next_alarm_fires_at t = Some next], then for the minimum alarm time [min] that
       occurs in [t], it is guaranteed that: [next - alarm_precision t <= min < next]. *)
-    val nextAlarmFiresAt<'a> : 'a ExternalEltValue TimingWheel -> TimeNs option
+    val nextAlarmFiresAt<'a> : 'a ExternalEltValue TimingWheel -> TimeNs voption
 
     /// <summary>
     ///

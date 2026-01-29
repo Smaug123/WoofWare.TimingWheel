@@ -170,17 +170,17 @@ WoofWare.TimingWheel.TimingWheel.invariant [static method]: ('a -> unit) -> 'a W
 WoofWare.TimingWheel.TimingWheel.isEmpty [static method]: 'a WoofWare.TimingWheel.TimingWheel -> bool
 WoofWare.TimingWheel.TimingWheel.iter [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> (int Microsoft.FSharp.Core.FSharpValueOption -> unit) -> unit
 WoofWare.TimingWheel.TimingWheel.length [static method]: 'a WoofWare.TimingWheel.TimingWheel -> int
-WoofWare.TimingWheel.TimingWheel.maxAlarmTimeInMinInterval [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> System.Int64 option
+WoofWare.TimingWheel.TimingWheel.maxAlarmTimeInMinInterval [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> System.Int64 Microsoft.FSharp.Core.FSharpValueOption
 WoofWare.TimingWheel.TimingWheel.maxAlarmTimeInMinIntervalThrowing [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> System.Int64
 WoofWare.TimingWheel.TimingWheel.maxAllowedAlarmIntervalNum [static method]: 'a WoofWare.TimingWheel.TimingWheel -> System.Int64
 WoofWare.TimingWheel.TimingWheel.maxAllowedAlarmTime [static method]: 'a WoofWare.TimingWheel.TimingWheel -> System.Int64
 WoofWare.TimingWheel.TimingWheel.mem [static method]: 'a WoofWare.TimingWheel.TimingWheel -> int Microsoft.FSharp.Core.FSharpValueOption -> bool
-WoofWare.TimingWheel.TimingWheel.minAlarmIntervalNum [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> System.Int64 option
+WoofWare.TimingWheel.TimingWheel.minAlarmIntervalNum [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> System.Int64 Microsoft.FSharp.Core.FSharpValueOption
 WoofWare.TimingWheel.TimingWheel.minAlarmIntervalNumThrowing [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> System.Int64
-WoofWare.TimingWheel.TimingWheel.minAlarmTimeInMinInterval [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> System.Int64 option
+WoofWare.TimingWheel.TimingWheel.minAlarmTimeInMinInterval [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> System.Int64 Microsoft.FSharp.Core.FSharpValueOption
 WoofWare.TimingWheel.TimingWheel.minAlarmTimeInMinIntervalThrowing [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> System.Int64
 WoofWare.TimingWheel.TimingWheel.minAllowedAlarmIntervalNum [static method]: 'a WoofWare.TimingWheel.TimingWheel -> System.Int64
-WoofWare.TimingWheel.TimingWheel.nextAlarmFiresAt [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> System.Int64 option
+WoofWare.TimingWheel.TimingWheel.nextAlarmFiresAt [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> System.Int64 Microsoft.FSharp.Core.FSharpValueOption
 WoofWare.TimingWheel.TimingWheel.nextAlarmFiresAtThrowing [static method]: 'a WoofWare.TimingWheel.ExternalEltValue WoofWare.TimingWheel.TimingWheel -> System.Int64
 WoofWare.TimingWheel.TimingWheel.now [static method]: 'a WoofWare.TimingWheel.TimingWheel -> System.Int64
 WoofWare.TimingWheel.TimingWheel.nowIntervalNum [static method]: 'a WoofWare.TimingWheel.TimingWheel -> System.Int64

@@ -99,19 +99,19 @@ module TimingWheel =
      interval. *)
         intervalNumStart t (Key.succ key)
 
-    let nextAlarmFiresAt<'a> (t : TimingWheel<ExternalEltValue<'a>>) : TimeNs option =
+    let nextAlarmFiresAt<'a> (t : TimingWheel<ExternalEltValue<'a>>) : TimeNs voption =
         let elt = PriorityQueue.minElt' t.PriorityQueue
 
         if InternalElt.isNull elt then
-            None
+            ValueNone
         else
 
         let key = InternalElt.key (pool t) elt
 
         if key = t.MaxIntervalNum then
-            None
+            ValueNone
         else
-            Some (nextAlarmFiresAtInternal t key)
+            ValueSome (nextAlarmFiresAtInternal t key)
 
     let nextAlarmFiresAtThrowing<'a> (t : TimingWheel<ExternalEltValue<'a>>) : TimeNs =
         let elt = PriorityQueue.minElt' t.PriorityQueue
@@ -304,13 +304,13 @@ module TimingWheel =
     let rescheduleAtIntervalNum<'a> (t : TimingWheel<ExternalEltValue<'a>>) (alarm : ExternalElt) (at : Key) : unit =
         rescheduleGen t alarm at (intervalNumStart t at)
 
-    let minAlarmIntervalNum<'a> (t : TimingWheel<ExternalEltValue<'a>>) : Key option =
+    let minAlarmIntervalNum<'a> (t : TimingWheel<ExternalEltValue<'a>>) : Key voption =
         let elt = PriorityQueue.minElt' t.PriorityQueue in
 
         if InternalElt.isNull elt then
-            None
+            ValueNone
         else
-            Some (InternalElt.key (pool t) elt)
+            ValueSome (InternalElt.key (pool t) elt)
 
     let minAlarmIntervalNumThrowing<'a> (t : TimingWheel<ExternalEltValue<'a>>) : Key =
         let elt = PriorityQueue.minElt' t.PriorityQueue
@@ -328,21 +328,21 @@ module TimingWheel =
         let pool = pool t
         InternalElt.minAlarmTime pool elt (InternalElt.key pool elt)
 
-    let maxAlarmTimeInMinInterval<'a> (t : TimingWheel<ExternalEltValue<'a>>) : TimeNs option =
+    let maxAlarmTimeInMinInterval<'a> (t : TimingWheel<ExternalEltValue<'a>>) : TimeNs voption =
         let elt = PriorityQueue.minElt' t.PriorityQueue in
 
         if InternalElt.isNull elt then
-            None
+            ValueNone
         else
-            Some (maxAlarmTimeInList t elt)
+            ValueSome (maxAlarmTimeInList t elt)
 
-    let minAlarmTimeInMinInterval<'a> (t : TimingWheel<ExternalEltValue<'a>>) : TimeNs option =
+    let minAlarmTimeInMinInterval<'a> (t : TimingWheel<ExternalEltValue<'a>>) : TimeNs voption =
         let elt = PriorityQueue.minElt' t.PriorityQueue in
 
         if InternalElt.isNull elt then
-            None
+            ValueNone
         else
-            Some (minAlarmTimeInList t elt)
+            ValueSome (minAlarmTimeInList t elt)
 
     let maxAlarmTimeInMinIntervalThrowing<'a> (t : TimingWheel<ExternalEltValue<'a>>) : TimeNs =
         let elt = PriorityQueue.minElt' t.PriorityQueue in

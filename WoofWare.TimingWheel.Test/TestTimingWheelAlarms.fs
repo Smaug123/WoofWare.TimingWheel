@@ -34,7 +34,7 @@ module TestTimingWheelAlarms =
                 else
                     None
 
-            $"((now {TimeNs.display t.Now})\n  (next_alarm_fires_at ({Option.map TimeNs.display (TimingWheel.nextAlarmFiresAt t)}))\n  (alarm1_at ({alarmAt alarm1 |> Option.map TimeNs.display}))\n  (alarm2_at ({alarmAt alarm2 |> Option.map TimeNs.display})))"
+            $"((now {TimeNs.display t.Now})\n  (next_alarm_fires_at ({ValueOption.map TimeNs.display (TimingWheel.nextAlarmFiresAt t)}))\n  (alarm1_at ({alarmAt alarm1 |> Option.map TimeNs.display}))\n  (alarm2_at ({alarmAt alarm2 |> Option.map TimeNs.display})))"
             |> messages.Add
 
         show ()
@@ -91,46 +91,46 @@ module TestTimingWheelAlarms =
         expect {
             snapshot
                 @"((now 1970-01-01T00:00:00.0000000Z)
-  (next_alarm_fires_at (Some(1970-01-01T00:00:06.4424509Z)))
+  (next_alarm_fires_at (1970-01-01T00:00:06.4424509Z))
   (alarm1_at (Some(1970-01-01T00:00:05.3687091Z)))
   (alarm2_at (Some(1970-01-01T00:00:10.7374182Z))))
 Reschedule alarm1 after alarm2; alarm2 becomes next.
 ((now 1970-01-01T00:00:00.0000000Z)
-  (next_alarm_fires_at (Some(1970-01-01T00:00:11.8111600Z)))
+  (next_alarm_fires_at (1970-01-01T00:00:11.8111600Z))
   (alarm1_at (Some(1970-01-01T00:00:16.1061273Z)))
   (alarm2_at (Some(1970-01-01T00:00:10.7374182Z))))
 Advance time past alarm1's original time; nothing fires.
 ((now 1970-01-01T00:00:07.5161927Z)
-  (next_alarm_fires_at (Some(1970-01-01T00:00:11.8111600Z)))
+  (next_alarm_fires_at (1970-01-01T00:00:11.8111600Z))
   (alarm1_at (Some(1970-01-01T00:00:16.1061273Z)))
   (alarm2_at (Some(1970-01-01T00:00:10.7374182Z))))
 Reschedule alarm1 before alarm2 again; alarm1 becomes next.
 ((now 1970-01-01T00:00:07.5161927Z)
-  (next_alarm_fires_at (Some(1970-01-01T00:00:09.6636764Z)))
+  (next_alarm_fires_at (1970-01-01T00:00:09.6636764Z))
   (alarm1_at (Some(1970-01-01T00:00:08.5899345Z)))
   (alarm2_at (Some(1970-01-01T00:00:10.7374182Z))))
 Advance time past alarm1, alarm1 fires but alarm2 does not.
 ((now 1970-01-01T00:00:09.6636764Z)
-  (next_alarm_fires_at (Some(1970-01-01T00:00:11.8111600Z)))
+  (next_alarm_fires_at (1970-01-01T00:00:11.8111600Z))
   (alarm1_at ())
   (alarm2_at (Some(1970-01-01T00:00:10.7374182Z))))
 Cannot reschedule the already-fired alarm1.
 Timing_wheel cannot reschedule alarm not in timing wheel
 ((now 1970-01-01T00:00:09.6636764Z)
-  (next_alarm_fires_at (Some(1970-01-01T00:00:11.8111600Z)))
+  (next_alarm_fires_at (1970-01-01T00:00:11.8111600Z))
   (alarm1_at ())
   (alarm2_at (Some(1970-01-01T00:00:10.7374182Z))))
 Cannot reschedule before current time.
 TimingWheel cannot schedule alarm for 8589934592 before start of current interval (9663676416)
 ((now 1970-01-01T00:00:09.6636764Z)
-  (next_alarm_fires_at (Some(1970-01-01T00:00:11.8111600Z)))
+  (next_alarm_fires_at (1970-01-01T00:00:11.8111600Z))
   (alarm1_at ())
   (alarm2_at (Some(1970-01-01T00:00:10.7374182Z))))
 Cannot reschedule arbitrarily far in the future.
 TimingWheel cannot schedule alarm that far in the future (max: 1109175304191; got: 1110249046015)
 Fire alarm 2.
 ((now 1970-01-01T00:00:11.8111600Z)
-  (next_alarm_fires_at ())
+  (next_alarm_fires_at (ValueNone))
   (alarm1_at ())
   (alarm2_at ()))"
 
@@ -142,46 +142,46 @@ Fire alarm 2.
         expect {
             snapshot
                 @"((now 1970-01-01T00:00:00.0000000Z)
-  (next_alarm_fires_at (Some(1970-01-01T00:00:06.4424509Z)))
+  (next_alarm_fires_at (1970-01-01T00:00:06.4424509Z))
   (alarm1_at (Some(1970-01-01T00:00:05.3687091Z)))
   (alarm2_at (Some(1970-01-01T00:00:10.7374182Z))))
 Reschedule alarm1 after alarm2; alarm2 becomes next.
 ((now 1970-01-01T00:00:00.0000000Z)
-  (next_alarm_fires_at (Some(1970-01-01T00:00:11.8111600Z)))
+  (next_alarm_fires_at (1970-01-01T00:00:11.8111600Z))
   (alarm1_at (Some(1970-01-01T00:00:16.1061273Z)))
   (alarm2_at (Some(1970-01-01T00:00:10.7374182Z))))
 Advance time past alarm1's original time; nothing fires.
 ((now 1970-01-01T00:00:07.5161927Z)
-  (next_alarm_fires_at (Some(1970-01-01T00:00:11.8111600Z)))
+  (next_alarm_fires_at (1970-01-01T00:00:11.8111600Z))
   (alarm1_at (Some(1970-01-01T00:00:16.1061273Z)))
   (alarm2_at (Some(1970-01-01T00:00:10.7374182Z))))
 Reschedule alarm1 before alarm2 again; alarm1 becomes next.
 ((now 1970-01-01T00:00:07.5161927Z)
-  (next_alarm_fires_at (Some(1970-01-01T00:00:09.6636764Z)))
+  (next_alarm_fires_at (1970-01-01T00:00:09.6636764Z))
   (alarm1_at (Some(1970-01-01T00:00:08.5899345Z)))
   (alarm2_at (Some(1970-01-01T00:00:10.7374182Z))))
 Advance time past alarm1, alarm1 fires but alarm2 does not.
 ((now 1970-01-01T00:00:09.6636764Z)
-  (next_alarm_fires_at (Some(1970-01-01T00:00:11.8111600Z)))
+  (next_alarm_fires_at (1970-01-01T00:00:11.8111600Z))
   (alarm1_at ())
   (alarm2_at (Some(1970-01-01T00:00:10.7374182Z))))
 Cannot reschedule the already-fired alarm1.
 Timing_wheel cannot reschedule alarm not in timing wheel
 ((now 1970-01-01T00:00:09.6636764Z)
-  (next_alarm_fires_at (Some(1970-01-01T00:00:11.8111600Z)))
+  (next_alarm_fires_at (1970-01-01T00:00:11.8111600Z))
   (alarm1_at ())
   (alarm2_at (Some(1970-01-01T00:00:10.7374182Z))))
 Cannot reschedule before current time.
 TimingWheel cannot schedule alarm for 8589934592 before start of current interval (9663676416)
 ((now 1970-01-01T00:00:09.6636764Z)
-  (next_alarm_fires_at (Some(1970-01-01T00:00:11.8111600Z)))
+  (next_alarm_fires_at (1970-01-01T00:00:11.8111600Z))
   (alarm1_at ())
   (alarm2_at (Some(1970-01-01T00:00:10.7374182Z))))
 Cannot reschedule arbitrarily far in the future.
 TimingWheel cannot schedule alarm that far in the future (max: 1109175304191; got: 1109175304192)
 Fire alarm 2.
 ((now 1970-01-01T00:00:11.8111600Z)
-  (next_alarm_fires_at ())
+  (next_alarm_fires_at (ValueNone))
   (alarm1_at ())
   (alarm2_at ()))"
 
@@ -198,7 +198,7 @@ Fire alarm 2.
         let nextAlarmFiresAfter () =
             let display =
                 TimingWheel.nextAlarmFiresAt t
-                |> Option.map (fun t -> TimeNs.diff t TimeNs.epoch |> TimeNs.Span.display)
+                |> ValueOption.map (fun t -> TimeNs.diff t TimeNs.epoch |> TimeNs.Span.display)
 
             $"nextAlarmFiresAfter: {display}"
 
@@ -211,52 +211,52 @@ Fire alarm 2.
             nextAlarmFiresAfter ()
 
         expect {
-            snapshot @"nextAlarmFiresAfter: Some(03s.221225400)"
+            snapshot @"nextAlarmFiresAfter: 03s.221225400"
             return addAt (gibiNanos 2.0)
         }
 
         expect {
-            snapshot @"nextAlarmFiresAfter: Some(02s.147483600)"
+            snapshot @"nextAlarmFiresAfter: 02s.147483600"
             return addAt (gibiNanos 1.5)
         }
 
         expect {
-            snapshot @"nextAlarmFiresAfter: Some(02s.147483600)"
+            snapshot @"nextAlarmFiresAfter: 02s.147483600"
             return addAt (gibiNanos 1.0)
         }
 
         expect {
-            snapshot @"nextAlarmFiresAfter: Some(01s.073741800)"
+            snapshot @"nextAlarmFiresAfter: 01s.073741800"
             return addAt (gibiNanos 0.5)
         }
 
         expect {
-            snapshot @"nextAlarmFiresAfter: Some(01s.073741800)"
+            snapshot @"nextAlarmFiresAfter: 01s.073741800"
             return addAt (gibiNanos 0.1)
         }
 
         expect {
-            snapshot @"nextAlarmFiresAfter: Some(01s.073741800)"
+            snapshot @"nextAlarmFiresAfter: 01s.073741800"
             return advanceClock (gibiNanos 0.5)
         }
 
         expect {
-            snapshot @"nextAlarmFiresAfter: Some(02s.147483600)"
+            snapshot @"nextAlarmFiresAfter: 02s.147483600"
             return advanceClock (gibiNanos 1.0)
         }
 
         expect {
-            snapshot @"nextAlarmFiresAfter: Some(02s.147483600)"
+            snapshot @"nextAlarmFiresAfter: 02s.147483600"
             return advanceClock (gibiNanos 1.5)
         }
 
         expect {
-            snapshot @"nextAlarmFiresAfter: Some(03s.221225400)"
+            snapshot @"nextAlarmFiresAfter: 03s.221225400"
             return advanceClock (gibiNanos 2.0)
         }
 
         expect {
-            snapshot @"nextAlarmFiresAfter: "
+            snapshot @"nextAlarmFiresAfter: ValueNone"
             return advanceClock (gibiNanos 3.0)
         }
 
@@ -264,7 +264,7 @@ Fire alarm 2.
     let ``nextAlarmFiresAt with an alarm at maxTime`` () =
         let t = createUnit (Some true) (Some [ 1 ]) None None
         TimingWheel.add t TimingWheel.maxTime () |> ignore<ExternalElt>
-        TimingWheel.nextAlarmFiresAt t |> shouldEqual None
+        TimingWheel.nextAlarmFiresAt t |> shouldEqual ValueNone
 
         expect {
             snapshotThrows @"System.Exception: nextAlarmFiresAtThrowing with all alarms in max interval"
@@ -350,7 +350,7 @@ alarms:
         TimingWheel.add t (TimeNs.add start precision) (ref false)
         |> ignore<ExternalElt>
 
-        let base' = TimingWheel.nextAlarmFiresAt t |> Option.get
+        let base' = TimingWheel.nextAlarmFiresAt t |> ValueOption.get
         let step0 = TimeNs.add base' precision02
         let step1 = TimeNs.add step0 precision02
         let step2 = TimeNs.add step1 precision02
@@ -394,7 +394,7 @@ alarms:
     let ``test maxAlarmTimeInMinInterval`` () =
         let t = create<unit -> unit> None (Some [ 1 ; 1 ]) None None
 
-        TimingWheel.maxAlarmTimeInMinInterval t |> shouldEqual None
+        TimingWheel.maxAlarmTimeInMinInterval t |> shouldEqual ValueNone
 
         let addAfter span =
             TimingWheel.add t (TimeNs.add t.Now span) ignore
@@ -403,11 +403,11 @@ alarms:
 
         expect {
             snapshot @"1970-01-01T00:00:00.5368709Z"
-            return TimingWheel.maxAlarmTimeInMinInterval t |> Option.get |> TimeNs.display
+            return TimingWheel.maxAlarmTimeInMinInterval t |> ValueOption.get |> TimeNs.display
         }
 
         TimingWheel.remove t a
-        TimingWheel.maxAlarmTimeInMinInterval t |> shouldEqual None
+        TimingWheel.maxAlarmTimeInMinInterval t |> shouldEqual ValueNone
 
         // Add two alarms that appear in different intervals, but in the same slot on the
         //   second level of the timing wheel.  So the correct [max_alarm_time_in_min_interval] is
@@ -417,14 +417,14 @@ alarms:
 
         expect {
             snapshot @"1970-01-01T00:00:02.2548578Z"
-            return TimingWheel.maxAlarmTimeInMinInterval t |> Option.get |> TimeNs.display
+            return TimingWheel.maxAlarmTimeInMinInterval t |> ValueOption.get |> TimeNs.display
         }
 
     [<Test>]
     let ``test minAlarmTimeInMinInterval`` () =
         let t = create<unit -> unit> None (Some [ 1 ; 1 ]) None None
 
-        TimingWheel.minAlarmTimeInMinInterval t |> shouldEqual None
+        TimingWheel.minAlarmTimeInMinInterval t |> shouldEqual ValueNone
 
         let addAfter span =
             TimingWheel.add t (TimeNs.add t.Now span) ignore
@@ -433,18 +433,18 @@ alarms:
 
         expect {
             snapshot @"1970-01-01T00:00:00.5368709Z"
-            return TimingWheel.minAlarmTimeInMinInterval t |> Option.get |> TimeNs.display
+            return TimingWheel.minAlarmTimeInMinInterval t |> ValueOption.get |> TimeNs.display
         }
 
         TimingWheel.remove t a
-        TimingWheel.minAlarmTimeInMinInterval t |> shouldEqual None
+        TimingWheel.minAlarmTimeInMinInterval t |> shouldEqual ValueNone
 
         let _ = addAfter (gibiNanos 2.1)
         let _ = addAfter (gibiNanos 3.9)
 
         expect {
             snapshot @"1970-01-01T00:00:02.2548578Z"
-            return TimingWheel.minAlarmTimeInMinInterval t |> Option.get |> TimeNs.display
+            return TimingWheel.minAlarmTimeInMinInterval t |> ValueOption.get |> TimeNs.display
         }
 
     [<Test>]

@@ -145,7 +145,7 @@ alarms:
         let _ = TimingWheel.addAtIntervalNum t (IntervalNum.ofInt 3) ()
 
         // Verify minAlarmIntervalNum returns the minimum (1)
-        TimingWheel.minAlarmIntervalNum t |> shouldEqual (Some IntervalNum.one)
+        TimingWheel.minAlarmIntervalNum t |> shouldEqual (ValueSome IntervalNum.one)
 
         // Clear the wheel - this frees all elements but without the fix, MinElt still
         // points to the freed element at interval 1, and EltKeyLowerBound is still 1
@@ -160,7 +160,8 @@ alarms:
 
         // With the fix, minAlarmIntervalNum should return 5 (the only element)
         // Without the fix, it might return garbage or the wrong value
-        TimingWheel.minAlarmIntervalNum t |> shouldEqual (Some (IntervalNum.ofInt 5))
+        TimingWheel.minAlarmIntervalNum t
+        |> shouldEqual (ValueSome (IntervalNum.ofInt 5))
 
         // Now add element at interval 4 (lower than 5). This forces a min-update.
         // If the cache was properly reset after clear, the min should now be 4.
@@ -168,7 +169,8 @@ alarms:
         // but this second add definitively tests that min-tracking works correctly.
         let _ = TimingWheel.addAtIntervalNum t (IntervalNum.ofInt 4) ()
 
-        TimingWheel.minAlarmIntervalNum t |> shouldEqual (Some (IntervalNum.ofInt 4))
+        TimingWheel.minAlarmIntervalNum t
+        |> shouldEqual (ValueSome (IntervalNum.ofInt 4))
 
     [<Test>]
     let ``clear resets min cache so nextAlarmFiresAt works correctly`` () =
@@ -190,7 +192,7 @@ alarms:
         TimingWheel.clear t
 
         // nextAlarmFiresAt should now return None since wheel is empty
-        TimingWheel.nextAlarmFiresAt t |> shouldEqual None
+        TimingWheel.nextAlarmFiresAt t |> shouldEqual ValueNone
 
         // Add element at interval 5 first
         let _ = TimingWheel.addAtIntervalNum t (IntervalNum.ofInt 5) ()
@@ -203,7 +205,7 @@ alarms:
         // The fire time should be for interval 6 (since alarms in interval 5 fire when we reach interval 6)
         let expectedFireTimeFor5 = TimingWheel.intervalNumStart t (IntervalNum.ofInt 6)
 
-        firesAfterFirst |> shouldEqual (Some expectedFireTimeFor5)
+        firesAfterFirst |> shouldEqual (ValueSome expectedFireTimeFor5)
 
         // Now add element at interval 4 (lower than 5). This forces a min-update.
         // If the cache was properly reset after clear, nextAlarmFiresAt should now
@@ -217,7 +219,7 @@ alarms:
         // The fire time should be for interval 5 (since alarms in interval 4 fire when we reach interval 5)
         let expectedFireTimeFor4 = TimingWheel.intervalNumStart t (IntervalNum.ofInt 5)
 
-        firesAfterSecond |> shouldEqual (Some expectedFireTimeFor4)
+        firesAfterSecond |> shouldEqual (ValueSome expectedFireTimeFor4)
 
     [<Test>]
     let ``isEmpty, length`` () =
@@ -249,9 +251,9 @@ alarms:
 
             let expected =
                 if intervalNum < maxIntervalNum then
-                    Some (IntervalNum.succ intervalNum)
+                    ValueSome (IntervalNum.succ intervalNum)
                 else
-                    None
+                    ValueNone
 
             TimingWheel.minAlarmIntervalNum t |> shouldEqual expected
 
