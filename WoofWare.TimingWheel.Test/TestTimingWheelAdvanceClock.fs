@@ -130,18 +130,18 @@ alarms:
     let ``test advanceClock`` () =
         let t = createUnit None (Some [ 1 ; 1 ; 1 ; 1 ]) None None
 
-        TimingWheel.minAlarmIntervalNum t |> shouldEqual None
+        TimingWheel.minAlarmIntervalNum t |> shouldEqual ValueNone
 
         let _elt = TimingWheel.addAtIntervalNum t IntervalNum.zero ()
 
-        TimingWheel.minAlarmIntervalNum t |> shouldEqual (Some IntervalNum.zero)
+        TimingWheel.minAlarmIntervalNum t |> shouldEqual (ValueSome IntervalNum.zero)
 
         let maxIntervalNum = 10
 
         for intervalNum = 1 to maxIntervalNum do
             let at = IntervalNum.ofInt intervalNum
             ignore<ExternalElt> (TimingWheel.addAtIntervalNum t at ())
-            TimingWheel.minAlarmIntervalNum t |> shouldEqual (Some IntervalNum.zero)
+            TimingWheel.minAlarmIntervalNum t |> shouldEqual (ValueSome IntervalNum.zero)
 
         for intervalNum = 1 to maxIntervalNum + 1 do
             let intervalNum = IntervalNum.ofInt intervalNum
@@ -152,9 +152,9 @@ alarms:
 
             let expected =
                 if intervalNum <= IntervalNum.ofInt maxIntervalNum then
-                    Some intervalNum
+                    ValueSome intervalNum
                 else
-                    None
+                    ValueNone
 
             TimingWheel.minAlarmIntervalNum t |> shouldEqual expected
 
@@ -635,7 +635,8 @@ alarms:
         let _ = TimingWheel.add t (TimeNs.add baseTime offset2) 2
 
         // Both should be in interval 5
-        TimingWheel.minAlarmIntervalNum t |> shouldEqual (Some (IntervalNum.ofInt 5))
+        TimingWheel.minAlarmIntervalNum t
+        |> shouldEqual (ValueSome (IntervalNum.ofInt 5))
 
         // Advance to just past the first alarm's exact time (within interval 5)
         let afterFirst = TimeNs.add baseTime (TimeNs.Span.ofInt64Ns 150L)
