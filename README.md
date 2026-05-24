@@ -1,7 +1,7 @@
 # WoofWare.TimingWheel
 
 [![NuGet version](https://img.shields.io/nuget/v/WoofWare.TimingWheel.svg?style=flat-square)](https://www.nuget.org/packages/WoofWare.TimingWheel)
-[![GitHub Actions status](https://github.com/Smaug123/WoofWare.TimingWheel/actions/workflows/dotnet.yaml/badge.svg)](https://github.com/Smaug123/WoofWare.TimingWheel/actions?query=branch%3Amain)
+[![GitHub Actions status](https://github.com/Smaug123/WoofWare.TimingWheel/actions/workflows/ci.yaml/badge.svg)](https://github.com/Smaug123/WoofWare.TimingWheel/actions?query=branch%3Amain)
 [![License file](https://img.shields.io/github/license/Smaug123/WoofWare.TimingWheel)](./LICENCE.md)
 
 <picture>
